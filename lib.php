@@ -182,13 +182,15 @@ function imagemap_is_area_active($area, $userid) {
         return true;
     }
 
-    $completion = new completion_info(get_course($DB->get_field('course_modules', 'course', array('id' => $area->conditioncmid))));
     $cm = get_coursemodule_from_id(null, $area->conditioncmid);
-
+    
     if (!$cm) {
         return true;
     }
 
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $completion = new completion_info($course);
+    
     $data = $completion->get_data($cm, false, $userid);
     return $data->completionstate != COMPLETION_INCOMPLETE;
 }
@@ -205,8 +207,11 @@ function imagemap_get_area_url($area, $courseid) {
 
     switch ($area->linktype) {
         case 'module':
-            return new moodle_url('/mod/' . get_coursemodule_from_id(null, $area->linktarget)->modname . '/view.php', 
-                array('id' => $area->linktarget));
+            $cm = get_coursemodule_from_id(null, $area->linktarget);
+            if ($cm) {
+                return new moodle_url('/mod/' . $cm->modname . '/view.php', array('id' => $area->linktarget));
+            }
+            return null;
         case 'section':
             return new moodle_url('/course/view.php', array('id' => $courseid, 'section' => $area->linktarget));
         case 'url':

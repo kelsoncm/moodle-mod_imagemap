@@ -75,3 +75,6 @@ $string['error:invalidshape'] = 'Tipo de forma inválido';
 $string['error:invalidlinktype'] = 'Tipo de link inválido';
 $string['error:noimage'] = 'Nenhuma imagem foi enviada';
 $string['error:invalidcoords'] = 'Coordenadas inválidas';
+
+// Privacy
+$string['privacy:metadata'] = 'O módulo Mapa de Imagem não armazena nenhum dado pessoal.';

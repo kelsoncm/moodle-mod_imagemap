@@ -75,3 +75,6 @@ $string['error:invalidshape'] = 'Invalid shape type';
 $string['error:invalidlinktype'] = 'Invalid link type';
 $string['error:noimage'] = 'No image has been uploaded';
 $string['error:invalidcoords'] = 'Invalid coordinates';
+
+// Privacy
+$string['privacy:metadata'] = 'The Image Map module does not store any personal data.';
