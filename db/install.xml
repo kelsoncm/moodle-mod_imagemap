@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/imagemap/db" VERSION="20260130" COMMENT="XMLDB file for Moodle mod_imagemap"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="imagemap" COMMENT="Main table for imagemap instances">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="width" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="height" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="course" TYPE="foreign" FIELDS="course" REFTABLE="course" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="imagemap_area" COMMENT="Clickable areas in the imagemap">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="imagemapid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="shape" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="circle, rect, or poly"/>
+        <FIELD NAME="coords" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Coordinates for the shape"/>
+        <FIELD NAME="linktype" TYPE="char" LENGTH="20" NOTNULL="true" SEQUENCE="false" COMMENT="module, section, or url"/>
+        <FIELD NAME="linktarget" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Target identifier"/>
+        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="conditioncmid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Course module ID for completion condition"/>
+        <FIELD NAME="activefilter" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="CSS filter to apply when active"/>
+        <FIELD NAME="inactivefilter" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="CSS filter to apply when inactive"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="imagemapid" TYPE="foreign" FIELDS="imagemapid" REFTABLE="imagemap" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="conditioncmid" UNIQUE="false" FIELDS="conditioncmid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
