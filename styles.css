@@ -4,7 +4,8 @@
     max-width: 100%;
 }
 
-.mod_imagemap .imagemap-container img {
+.mod_imagemap .imagemap-container img,
+.mod_imagemap .imagemap-image {
     max-width: 100%;
     height: auto;
     display: block;

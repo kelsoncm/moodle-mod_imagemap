@@ -91,8 +91,8 @@ if ($imagefile) {
     }
     
     // Output the imagemap
-    echo '<div class="imagemap-container" style="position: relative; display: inline-block;">';
-    echo '<img src="' . $imageurl . '" usemap="#imagemap' . $imagemap->id . '" style="max-width: 100%; height: auto;" id="imagemap-image-' . $imagemap->id . '">';
+    echo '<div class="imagemap-container">';
+    echo '<img src="' . s($imageurl) . '" usemap="#imagemap' . $imagemap->id . '" class="imagemap-image" id="imagemap-image-' . $imagemap->id . '" data-areadata="' . s(json_encode($areadata)) . '">';
     echo '<map name="imagemap' . $imagemap->id . '">';
     
     foreach ($areas as $area) {
@@ -100,7 +100,7 @@ if ($imagefile) {
         $url = imagemap_get_area_url($area, $course->id);
         
         if ($isactive && $url) {
-            echo '<area shape="' . s($area->shape) . '" coords="' . s($area->coords) . '" href="' . $url->out() . '" alt="' . s($area->title) . '" title="' . s($area->title) . '">';
+            echo '<area shape="' . s($area->shape) . '" coords="' . s($area->coords) . '" href="' . s($url->out()) . '" alt="' . s($area->title) . '" title="' . s($area->title) . '">';
         }
     }
     
@@ -110,18 +110,20 @@ if ($imagefile) {
     // Add JavaScript for visual filters
     $PAGE->requires->js_amd_inline("
         require(['jquery'], function($) {
-            var areas = " . json_encode($areadata) . ";
             var img = $('#imagemap-image-{$imagemap->id}');
+            var areas = JSON.parse(img.attr('data-areadata'));
             
-            // Create overlay divs for visual feedback
-            var container = img.parent();
-            areas.forEach(function(area, index) {
-                var filter = area.active ? area.activefilter : area.inactivefilter;
-                // Apply filter to the entire image based on area state
-                if (filter && filter !== 'none') {
-                    img.css('filter', filter);
+            // Note: This simple implementation applies a filter to the whole image.
+            // For per-area filters, overlays would need to be created with SVG or canvas.
+            // Apply filter based on whether any area is inactive
+            var hasInactiveAreas = areas.some(function(area) { return !area.active; });
+            if (hasInactiveAreas) {
+                // Apply the first inactive area's filter to the image
+                var inactiveArea = areas.find(function(area) { return !area.active; });
+                if (inactiveArea && inactiveArea.inactivefilter !== 'none') {
+                    img.css('filter', inactiveArea.inactivefilter);
                 }
-            });
+            }
         });
     ");
     

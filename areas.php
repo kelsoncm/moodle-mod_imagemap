@@ -237,7 +237,7 @@ if ($imagefile) {
             canvas.height = img.height;
             drawImage();
         };
-        img.src = '<?php echo $imageurl; ?>';
+        img.src = <?php echo json_encode($imageurl->out()); ?>;
         
         function drawImage() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
