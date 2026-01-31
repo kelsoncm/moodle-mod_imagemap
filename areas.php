@@ -105,6 +105,29 @@ if ($imagefile) {
         );
     }
     
+    // Fetch CSS examples for active and inactive filters
+    $active_examples = $DB->get_records('imagemap_css_examples', array('type' => 'active'), 'sortorder ASC, name ASC');
+    $inactive_examples = $DB->get_records('imagemap_css_examples', array('type' => 'inactive'), 'sortorder ASC, name ASC');
+    
+    $active_examples_template = array();
+    $inactive_examples_template = array();
+    
+    foreach ($active_examples as $example) {
+        $active_examples_template[] = array(
+            'id' => $example->id,
+            'name' => $example->name,
+            'css' => $example->css
+        );
+    }
+    
+    foreach ($inactive_examples as $example) {
+        $inactive_examples_template[] = array(
+            'id' => $example->id,
+            'name' => $example->name,
+            'css' => $example->css
+        );
+    }
+    
     // Get completion modules organized by sections
     $modinfo = get_fast_modinfo($course);
     $sections_with_modules = array();
@@ -163,6 +186,8 @@ if ($imagefile) {
         'sections_with_modules' => $sections_with_modules,
         'all_modules_flat' => json_encode($all_modules_flat),
         'all_sections' => $all_sections,
+        'active_examples' => $active_examples_template,
+        'inactive_examples' => $inactive_examples_template,
         // Language strings
         'shape_label' => get_string('shape', 'imagemap'),
         'shape_rect' => get_string('shape_rect', 'imagemap'),

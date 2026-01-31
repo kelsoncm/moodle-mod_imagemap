@@ -1,6 +1,6 @@
-define([], function() {
+define([], function () {
     var initializer = {
-        init: function() {
+        init: function () {
             console.log('Editor init called');
             var data = window.imagemapEditorData || {};
             console.log('Editor data:', data);
@@ -22,13 +22,13 @@ define([], function() {
             var areasData = data.areasData || [];
             var selectedAreaId = null;
 
-            img.onload = function() {
+            img.onload = function () {
                 console.log('Image loaded, canvas dimensions:', img.width, 'x', img.height);
                 canvas.width = img.width;
                 canvas.height = img.height;
                 drawBase();
             };
-            img.onerror = function() {
+            img.onerror = function () {
                 console.error('Failed to load image:', data.imageUrl);
             };
             console.log('Setting image source to:', data.imageUrl);
@@ -41,7 +41,7 @@ define([], function() {
             }
 
             function drawExistingAreas() {
-                areasData.forEach(function(area) {
+                areasData.forEach(function (area) {
                     drawArea(area, area.id === selectedAreaId);
                 });
             }
@@ -91,16 +91,16 @@ define([], function() {
                 if (!coordsString) {
                     return [];
                 }
-                return coordsString.split(',').map(function(value) {
+                return coordsString.split(',').map(function (value) {
                     return parseFloat(value);
-                }).filter(function(value) {
+                }).filter(function (value) {
                     return !isNaN(value);
                 });
             }
 
             var shapeSelector = document.getElementById('shape-selector');
             if (shapeSelector) {
-                shapeSelector.addEventListener('change', function() {
+                shapeSelector.addEventListener('change', function () {
                     currentShape = this.value;
                     clearDrawing();
                 });
@@ -113,7 +113,7 @@ define([], function() {
 
             var finishPolyButton = document.getElementById('finish-poly');
             if (finishPolyButton) {
-                finishPolyButton.addEventListener('click', function() {
+                finishPolyButton.addEventListener('click', function () {
                     if (polyPoints.length >= 3) {
                         finishDrawing();
                     }
@@ -132,7 +132,7 @@ define([], function() {
                 closeAreaForm();
             }
 
-            canvas.addEventListener('mousedown', function(e) {
+            canvas.addEventListener('mousedown', function (e) {
                 if (e.button === 2) {
                     return;
                 }
@@ -154,7 +154,7 @@ define([], function() {
                 }
 
                 if (currentShape === 'poly') {
-                    polyPoints.push({x: x, y: y});
+                    polyPoints.push({ x: x, y: y });
                     drawBase();
                     drawPolygon();
                     if (polyPoints.length >= 3 && finishPolyButton) {
@@ -167,7 +167,7 @@ define([], function() {
                 }
             });
 
-            canvas.addEventListener('mousemove', function(e) {
+            canvas.addEventListener('mousemove', function (e) {
                 if (draggingArea) {
                     var dragArea = getAreaById(selectedAreaId);
                     if (!dragArea) {
@@ -209,7 +209,7 @@ define([], function() {
                 ctx.stroke();
             });
 
-            canvas.addEventListener('mouseup', function(e) {
+            canvas.addEventListener('mouseup', function (e) {
                 if (draggingArea) {
                     draggingArea = false;
                     var movedArea = getAreaById(selectedAreaId);
@@ -231,7 +231,7 @@ define([], function() {
                 finishDrawing(x, y);
             });
 
-            canvas.addEventListener('contextmenu', function(e) {
+            canvas.addEventListener('contextmenu', function (e) {
                 e.preventDefault();
                 var rect = canvas.getBoundingClientRect();
                 var x = e.clientX - rect.left;
@@ -259,7 +259,7 @@ define([], function() {
 
                 ctx.stroke();
 
-                polyPoints.forEach(function(point) {
+                polyPoints.forEach(function (point) {
                     ctx.fillStyle = '#FF0000';
                     ctx.beginPath();
                     ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
@@ -277,7 +277,7 @@ define([], function() {
                     var radius = Math.round(Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)));
                     coords = Math.round(startX) + ',' + Math.round(startY) + ',' + radius;
                 } else if (currentShape === 'poly') {
-                    coords = polyPoints.map(function(p) {
+                    coords = polyPoints.map(function (p) {
                         return Math.round(p.x) + ',' + Math.round(p.y);
                     }).join(',');
                 }
@@ -317,16 +317,101 @@ define([], function() {
 
             var closeButton = document.getElementById('close-area-form');
             if (closeButton) {
-                closeButton.addEventListener('click', function() {
+                closeButton.addEventListener('click', function () {
                     closeAreaForm();
                 });
             }
 
             var overlayEl = document.getElementById('imagemap-overlay');
             if (overlayEl) {
-                overlayEl.addEventListener('click', function() {
+                overlayEl.addEventListener('click', function () {
                     closeAreaForm();
                 });
+            }
+
+            // Setup CSS example dropdowns
+            var cssExampleSelects = document.querySelectorAll('.css-example-select');
+            cssExampleSelects.forEach(function (select) {
+                select.addEventListener('change', function () {
+                    var targetId = this.getAttribute('data-target');
+                    var targetTextarea = document.getElementById(targetId);
+                    if (targetTextarea && this.value) {
+                        targetTextarea.value = this.value;
+                        // Trigger input event to update preview
+                        var event = new Event('input', { bubbles: true });
+                        targetTextarea.dispatchEvent(event);
+                    }
+                });
+            });
+
+            // CSS validation and preview functionality
+            function validateAndPreviewCSS(input, previewContainer, previewBox) {
+                var cssValue = input.value.trim();
+
+                // Hide preview if empty
+                if (!cssValue || cssValue === 'none') {
+                    previewContainer.style.display = 'none';
+                    input.classList.remove('is-valid', 'is-invalid');
+                    return;
+                }
+
+                // Try to parse and apply CSS
+                var isValid = false;
+                try {
+                    // Create a temporary element to test CSS
+                    var testDiv = document.createElement('div');
+                    testDiv.style.cssText = '';
+
+                    // Check if it's a filter property or full CSS
+                    if (cssValue.indexOf(':') === -1 && cssValue.indexOf('(') !== -1) {
+                        // It's just a filter value like "grayscale(1)"
+                        testDiv.style.filter = cssValue;
+                        isValid = testDiv.style.filter !== '';
+                    } else {
+                        // It's full CSS
+                        testDiv.style.cssText = cssValue;
+                        isValid = testDiv.style.length > 0;
+                    }
+
+                    if (isValid) {
+                        // Apply to preview
+                        previewBox.style.cssText = 'width: 50px; height: 50px; background: white; ' + cssValue;
+                        previewContainer.style.display = 'block';
+                        input.classList.remove('is-invalid');
+                        input.classList.add('is-valid');
+                    } else {
+                        throw new Error('Invalid CSS');
+                    }
+                } catch (e) {
+                    // Invalid CSS
+                    previewContainer.style.display = 'none';
+                    input.classList.remove('is-valid');
+                    input.classList.add('is-invalid');
+                }
+            }
+
+            // Setup validation for activefilter
+            var activeFilterInput = document.getElementById('activefilter');
+            var activeFilterPreview = document.getElementById('activefilter-preview');
+            var activeFilterPreviewBox = document.getElementById('activefilter-preview-box');
+            if (activeFilterInput && activeFilterPreview && activeFilterPreviewBox) {
+                activeFilterInput.addEventListener('input', function () {
+                    validateAndPreviewCSS(this, activeFilterPreview, activeFilterPreviewBox);
+                });
+                // Trigger initial validation
+                validateAndPreviewCSS(activeFilterInput, activeFilterPreview, activeFilterPreviewBox);
+            }
+
+            // Setup validation for inactivefilter
+            var inactiveFilterInput = document.getElementById('inactivefilter');
+            var inactiveFilterPreview = document.getElementById('inactivefilter-preview');
+            var inactiveFilterPreviewBox = document.getElementById('inactivefilter-preview-box');
+            if (inactiveFilterInput && inactiveFilterPreview && inactiveFilterPreviewBox) {
+                inactiveFilterInput.addEventListener('input', function () {
+                    validateAndPreviewCSS(this, inactiveFilterPreview, inactiveFilterPreviewBox);
+                });
+                // Trigger initial validation
+                validateAndPreviewCSS(inactiveFilterInput, inactiveFilterPreview, inactiveFilterPreviewBox);
             }
 
             function openEditForm(area) {

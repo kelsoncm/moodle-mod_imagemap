@@ -42,5 +42,23 @@
         <INDEX NAME="conditioncmid" UNIQUE="false" FIELDS="conditioncmid"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="imagemap_css_examples" COMMENT="CSS examples for active and inactive filters">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="type" TYPE="char" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="active or inactive"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="css_text" TYPE="text" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="type" UNIQUE="false" FIELDS="type"/>
+        <INDEX NAME="sortorder" UNIQUE="false" FIELDS="sortorder"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

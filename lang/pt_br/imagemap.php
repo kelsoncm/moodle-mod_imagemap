@@ -85,6 +85,16 @@ $string['clickarea'] = 'Clique em uma área';
 $string['areainactive'] = 'Esta área está inativa (complete {$a} primeiro)';
 $string['noareas'] = 'Nenhuma área foi definida ainda.';
 
+// Admin strings
+$string['cssexamples'] = 'Exemplos de CSS';
+$string['managecssexamples'] = 'Gerenciar exemplos de CSS';
+$string['noexamples'] = 'Nenhum exemplo foi criado ainda.';
+$string['confirmdeleteexample'] = 'Tem certeza de que deseja excluir este exemplo?';
+$string['order'] = 'Ordem';
+$string['preview'] = 'Pré-visualização';
+$string['edit'] = 'Editar';
+$string['delete'] = 'Excluir';
+
 // Error strings
 $string['error:invalidshape'] = 'Tipo de forma inválido';
 $string['error:invalidlinktype'] = 'Tipo de link inválido';

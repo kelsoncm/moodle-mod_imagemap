@@ -1,0 +1,89 @@
+{{!
+    Template for CSS examples admin page
+
+    @package    mod_imagemap
+    @copyright  2026 Kelson C. M.
+    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+{{{heading}}}
+
+{{{addbutton}}}
+
+<div class="css-tabs-container mb-4">
+    <input type="radio" name="css-tab" id="tab-active" checked>
+    <input type="radio" name="css-tab" id="tab-inactive">
+
+    <div class="css-tabs">
+        <label for="tab-active" class="css-tab">{{#str}}activefilter, imagemap{{/str}}</label>
+        <label for="tab-inactive" class="css-tab">{{#str}}inactivefilter, imagemap{{/str}}</label>
+    </div>
+
+    <div class="css-tab-content">
+
+        <!-- Conteúdo da aba ativa -->
+        <div class="css-tab-pane" id="active-pane">
+            {{#active_examples}}
+            <div class="row">
+            {{#active_examples}}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">{{{name}}}</h5>
+                            <small class="text-muted">{{#str}}order{{/str}}: {{sortorder}}</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="css-preview mb-2 text-center">
+                                <canvas class="css-preview-canvas" data-css="{{css_text}}" width="250" height="125"></canvas>
+                                <small class="text-muted d-block">{{#str}}preview{{/str}}</small>
+                            </div>
+                            <p class="card-text"><code>{{css_text}}</code></p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{editurl}}" class="btn btn-sm btn-outline-primary me-2">{{#str}}edit{{/str}}</a>
+                            <a href="{{deleteurl}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('{{#str}}confirmdeleteexample, imagemap{{/str}}');">{{#str}}delete{{/str}}</a>
+                        </div>
+                    </div>
+                </div>
+            {{/active_examples}}
+            </div>
+            {{/active_examples}}
+            {{^active_examples}}
+            <p>{{#str}}noexamples, imagemap{{/str}}</p>
+            {{/active_examples}}
+        </div>
+
+        <!-- Conteúdo da aba inativa -->
+        <div class="css-tab-pane" id="inactive-pane">
+            {{#inactive_examples}}
+            <div class="row">
+            {{#inactive_examples}}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">{{{name}}}</h5>
+                            <small class="text-muted">{{#str}}order{{/str}}: {{sortorder}}</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="css-preview mb-2 text-center">
+                                <canvas class="css-preview-canvas" data-css="{{css_text}}" width="250" height="125"></canvas>
+                                <small class="text-muted d-block">{{#str}}preview{{/str}}</small>
+                            </div>
+                            <p class="card-text"><code>{{css_text}}</code></p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{editurl}}" class="btn btn-sm btn-outline-primary me-2">{{#str}}edit{{/str}}</a>
+                            <a href="{{deleteurl}}" class="btn btn-sm btn-outline-danger" onclick="return confirm('{{#str}}confirmdeleteexample, imagemap{{/str}}');">{{#str}}delete{{/str}}</a>
+                        </div>
+                    </div>
+                </div>
+            {{/inactive_examples}}
+            </div>
+            {{/inactive_examples}}
+            {{^inactive_examples}}
+            <p>{{#str}}noexamples, imagemap{{/str}}</p>
+            {{/inactive_examples}}
+        </div>
+
+    </div>
+</div>

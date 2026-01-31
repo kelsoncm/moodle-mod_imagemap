@@ -93,3 +93,15 @@ $string['error:invalidcoords'] = 'Invalid coordinates';
 
 // Privacy
 $string['privacy:metadata'] = 'The Image Map module does not store any personal data.';
+
+// CSS Examples
+$string['cssexamples'] = 'CSS Examples';
+$string['managecssexamples'] = 'Manage CSS Examples';
+$string['addexample'] = 'Add Example';
+$string['css_text'] = 'CSS Code';
+$string['type'] = 'Type';
+$string['sortorder'] = 'Sort Order';
+$string['exampledeleted'] = 'Example deleted successfully';
+$string['examplesaved'] = 'Example saved successfully';
+$string['noexamples'] = 'No examples defined yet';
+$string['confirmdeleteexample'] = 'Are you sure you want to delete this example?';
