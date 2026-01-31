@@ -146,8 +146,9 @@ function imagemap_pluginfile($course, $cm, $context, $filearea, array $args, $fo
     }
 
     $fs = get_file_storage();
+    $itemid = array_shift($args);
     $relativepath = implode('/', $args);
-    $fullpath = "/$context->id/mod_imagemap/$filearea/0/$relativepath";
+    $fullpath = "/$context->id/mod_imagemap/$filearea/$itemid/$relativepath";
 
     $file = $fs->get_file_by_hash(sha1($fullpath));
     if (!$file || $file->is_directory()) {
@@ -207,13 +208,19 @@ function imagemap_get_area_url($area, $courseid) {
 
     switch ($area->linktype) {
         case 'module':
-            $cm = get_coursemodule_from_id(null, $area->linktarget);
+            if (!is_number($area->linktarget)) {
+                return null;
+            }
+            $cm = get_coursemodule_from_id(null, (int)$area->linktarget);
             if ($cm) {
                 return new moodle_url('/mod/' . $cm->modname . '/view.php', array('id' => $area->linktarget));
             }
             return null;
         case 'section':
-            return new moodle_url('/course/view.php', array('id' => $courseid, 'section' => $area->linktarget));
+            if (!is_number($area->linktarget)) {
+                return null;
+            }
+            return new moodle_url('/course/view.php', array('id' => $courseid, 'section' => (int)$area->linktarget));
         case 'url':
             return new moodle_url($area->linktarget);
         default:

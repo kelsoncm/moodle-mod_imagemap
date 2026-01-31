@@ -65,7 +65,7 @@ if ($imagefile) {
         $context->id,
         'mod_imagemap',
         'image',
-        0,
+        $imagefile->get_itemid(),
         $imagefile->get_filepath(),
         $imagefile->get_filename()
     );
@@ -90,41 +90,131 @@ if ($imagefile) {
         );
     }
     
-    // Output the imagemap
-    echo '<div class="imagemap-container">';
-    echo '<img src="' . s($imageurl) . '" usemap="#imagemap' . $imagemap->id . '" class="imagemap-image" id="imagemap-image-' . $imagemap->id . '" data-areadata="' . s(json_encode($areadata)) . '">';
-    echo '<map name="imagemap' . $imagemap->id . '">';
-    
-    foreach ($areas as $area) {
-        $isactive = imagemap_is_area_active($area, $USER->id);
-        $url = imagemap_get_area_url($area, $course->id);
-        
-        if ($isactive && $url) {
-            echo '<area shape="' . s($area->shape) . '" coords="' . s($area->coords) . '" href="' . s($url->out()) . '" alt="' . s($area->title) . '" title="' . s($area->title) . '">';
-        }
-    }
-    
-    echo '</map>';
+    // Output the canvas-based imagemap with CSS overlays
+    echo '<div class="imagemap-container" style="position: relative; display: inline-block;">';
+    echo '<canvas id="imagemap-canvas-' . $imagemap->id . '" style="display: block;"></canvas>';
+    echo '<div id="imagemap-overlays-' . $imagemap->id . '" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>';
     echo '</div>';
     
-    // Add JavaScript for visual filters
-    $PAGE->requires->js_amd_inline("
-        require(['jquery'], function($) {
-            var img = $('#imagemap-image-{$imagemap->id}');
-            var areas = JSON.parse(img.attr('data-areadata'));
+    // Add JavaScript to render the canvas imagemap with CSS overlays
+    $PAGE->requires->js_init_code("
+        (function() {
+            var canvas = document.getElementById('imagemap-canvas-{$imagemap->id}');
+            var overlaysContainer = document.getElementById('imagemap-overlays-{$imagemap->id}');
+            if (!canvas || !overlaysContainer) return;
             
-            // Note: This simple implementation applies a filter to the whole image.
-            // For per-area filters, overlays would need to be created with SVG or canvas.
-            // Apply filter based on whether any area is inactive
-            var hasInactiveAreas = areas.some(function(area) { return !area.active; });
-            if (hasInactiveAreas) {
-                // Apply the first inactive area's filter to the image
-                var inactiveArea = areas.find(function(area) { return !area.active; });
-                if (inactiveArea && inactiveArea.inactivefilter !== 'none') {
-                    img.css('filter', inactiveArea.inactivefilter);
-                }
+            var ctx = canvas.getContext('2d');
+            var img = new Image();
+            var areas = " . json_encode($areadata) . ";
+            
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                overlaysContainer.style.width = img.width + 'px';
+                overlaysContainer.style.height = img.height + 'px';
+                drawImageMap();
+            };
+            
+            img.src = '" . $imageurl->out() . "';
+            
+            function drawImageMap() {
+                // Draw base image
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                
+                // Clear existing overlays
+                overlaysContainer.innerHTML = '';
+                
+                // Create CSS overlays for each area
+                areas.forEach(function(area, index) {
+                    var coords = area.coords.split(',').map(function(v) { return parseFloat(v); });
+                    var overlay = document.createElement('div');
+                    overlay.className = 'imagemap-area-overlay';
+                    overlay.style.position = 'absolute';
+                    overlay.style.pointerEvents = area.active && area.url ? 'auto' : 'none';
+                    overlay.style.cursor = area.active && area.url ? 'pointer' : 'not-allowed';
+                    overlay.title = area.title || '';
+                    overlay.dataset.areaIndex = index;
+                    
+                    // Apply custom CSS
+                    var cssText = area.active ? (area.activefilter || '') : (area.inactivefilter || 'filter: grayscale(1) opacity(0.5);');
+                    if (cssText && cssText !== 'none') {
+                        // Check if it's a filter or full CSS
+                        if (cssText.indexOf(':') === -1 && cssText.indexOf('(') !== -1) {
+                            // It's a filter value without property name
+                            overlay.style.filter = cssText;
+                        } else {
+                            // It's full CSS
+                            cssText.split(';').forEach(function(rule) {
+                                if (!rule.trim()) return;
+                                var parts = rule.split(':');
+                                if (parts.length === 2) {
+                                    var prop = parts[0].trim();
+                                    var value = parts[1].trim();
+                                    overlay.style.setProperty(prop, value);
+                                }
+                            });
+                        }
+                    }
+                    
+                    // Position and clip the overlay based on shape
+                    if (area.shape === 'rect' && coords.length >= 4) {
+                        var x1 = Math.min(coords[0], coords[2]);
+                        var y1 = Math.min(coords[1], coords[3]);
+                        var w = Math.abs(coords[2] - coords[0]);
+                        var h = Math.abs(coords[3] - coords[1]);
+                        overlay.style.left = x1 + 'px';
+                        overlay.style.top = y1 + 'px';
+                        overlay.style.width = w + 'px';
+                        overlay.style.height = h + 'px';
+                    } else if (area.shape === 'circle' && coords.length >= 3) {
+                        var cx = coords[0], cy = coords[1], r = coords[2];
+                        overlay.style.left = (cx - r) + 'px';
+                        overlay.style.top = (cy - r) + 'px';
+                        overlay.style.width = (r * 2) + 'px';
+                        overlay.style.height = (r * 2) + 'px';
+                        overlay.style.borderRadius = '50%';
+                    } else if (area.shape === 'poly' && coords.length >= 6) {
+                        var minX = Math.min.apply(null, coords.filter(function(v, i) { return i % 2 === 0; }));
+                        var maxX = Math.max.apply(null, coords.filter(function(v, i) { return i % 2 === 0; }));
+                        var minY = Math.min.apply(null, coords.filter(function(v, i) { return i % 2 === 1; }));
+                        var maxY = Math.max.apply(null, coords.filter(function(v, i) { return i % 2 === 1; }));
+                        
+                        overlay.style.left = minX + 'px';
+                        overlay.style.top = minY + 'px';
+                        overlay.style.width = (maxX - minX) + 'px';
+                        overlay.style.height = (maxY - minY) + 'px';
+                        
+                        // Create polygon clip path
+                        var clipPath = 'polygon(';
+                        for (var i = 0; i < coords.length; i += 2) {
+                            if (i > 0) clipPath += ', ';
+                            clipPath += ((coords[i] - minX) / (maxX - minX) * 100) + '% ';
+                            clipPath += ((coords[i + 1] - minY) / (maxY - minY) * 100) + '%';
+                        }
+                        clipPath += ')';
+                        overlay.style.clipPath = clipPath;
+                        overlay.style.webkitClipPath = clipPath;
+                    }
+                    
+                    // Create inner element for background if CSS includes background
+                    var inner = document.createElement('div');
+                    inner.style.width = '100%';
+                    inner.style.height = '100%';
+                    inner.style.pointerEvents = 'none';
+                    overlay.appendChild(inner);
+                    
+                    // Add click handler
+                    if (area.active && area.url) {
+                        overlay.addEventListener('click', function() {
+                            window.location.href = area.url;
+                        });
+                    }
+                    
+                    overlaysContainer.appendChild(overlay);
+                });
             }
-        });
+        })();
     ");
     
     if (has_capability('mod/imagemap:manage', $context)) {

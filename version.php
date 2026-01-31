@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_imagemap';
-$plugin->version = 2026013000;
-$plugin->requires = 2020061500; // Moodle 3.9 or later
+$plugin->release = '1.0.1';
+$plugin->version = 2026013001; // Increased for CSS text fields upgrade
+$plugin->requires = 2023041000; // Moodle 4.1 or later
 $plugin->maturity = MATURITY_ALPHA;
-$plugin->release = 'v1.0.0-alpha';

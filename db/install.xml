@@ -30,8 +30,8 @@
         <FIELD NAME="linktarget" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Target identifier"/>
         <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="conditioncmid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Course module ID for completion condition"/>
-        <FIELD NAME="activefilter" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="CSS filter to apply when active"/>
-        <FIELD NAME="inactivefilter" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" COMMENT="CSS filter to apply when inactive"/>
+        <FIELD NAME="activefilter" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="CSS to apply when active"/>
+        <FIELD NAME="inactivefilter" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="CSS to apply when inactive"/>
         <FIELD NAME="sortorder" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>

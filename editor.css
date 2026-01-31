@@ -1,0 +1,102 @@
+.imagemap-editor-container {
+    max-width: 100%;
+    margin: 20px 0;
+}
+
+.imagemap-canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    border: 2px solid #ddd;
+}
+
+#imagemap-canvas {
+    display: block;
+    cursor: crosshair;
+}
+
+.imagemap-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 1040;
+    display: none;
+}
+
+#area-form-container {
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1050;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    padding: 16px 18px;
+    width: 520px;
+    max-width: 95vw;
+}
+
+.area-controls {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+.area-list {
+    margin-top: 20px;
+}
+
+.area-item {
+    padding: 10px;
+    margin: 5px 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.area-item:hover {
+    background: #f9f9f9;
+}
+
+/* CSS Input styling */
+.css-input {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    resize: vertical;
+}
+
+.css-input:focus {
+    background-color: #fff;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.css-input.is-valid {
+    border-color: #28a745;
+}
+
+.css-input.is-invalid {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+#activefilter-preview,
+#inactivefilter-preview {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+#activefilter-preview-box,
+#inactivefilter-preview-box {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}

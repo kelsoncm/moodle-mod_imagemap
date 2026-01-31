@@ -29,14 +29,15 @@ require_sesskey();
 
 $cmid = required_param('cmid', PARAM_INT);
 $imagemapid = required_param('imagemapid', PARAM_INT);
+$areaid = optional_param('areaid', 0, PARAM_INT);
 $shape = required_param('shape', PARAM_ALPHA);
 $coords = required_param('coords', PARAM_TEXT);
 $title = required_param('title', PARAM_TEXT);
 $linktype = required_param('linktype', PARAM_ALPHA);
 $linktarget = required_param('linktarget', PARAM_TEXT);
 $conditioncmid = optional_param('conditioncmid', 0, PARAM_INT);
-$activefilter = optional_param('activefilter', 'none', PARAM_TEXT);
-$inactivefilter = optional_param('inactivefilter', 'grayscale(1) opacity(0.5)', PARAM_TEXT);
+$activefilter = optional_param('activefilter', 'none', PARAM_RAW);
+$inactivefilter = optional_param('inactivefilter', 'grayscale(1) opacity(0.5)', PARAM_RAW);
 
 $cm = get_coursemodule_from_id('imagemap', $cmid, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
@@ -57,12 +58,6 @@ if (!in_array($linktype, array('module', 'section', 'url'))) {
     print_error('error:invalidlinktype', 'imagemap');
 }
 
-// Get next sort order
-$maxsortorder = $DB->get_field_sql(
-    'SELECT COALESCE(MAX(sortorder), -1) FROM {imagemap_area} WHERE imagemapid = ?',
-    array($imagemapid)
-);
-
 $area = new stdClass();
 $area->imagemapid = $imagemapid;
 $area->shape = $shape;
@@ -73,9 +68,21 @@ $area->title = $title;
 $area->conditioncmid = $conditioncmid ?: null;
 $area->activefilter = $activefilter;
 $area->inactivefilter = $inactivefilter;
-$area->sortorder = $maxsortorder + 1;
 
-$DB->insert_record('imagemap_area', $area);
+if ($areaid) {
+    $existing = $DB->get_record('imagemap_area', array('id' => $areaid, 'imagemapid' => $imagemapid), '*', MUST_EXIST);
+    $area->id = $areaid;
+    $area->sortorder = $existing->sortorder;
+    $DB->update_record('imagemap_area', $area);
+} else {
+    // Get next sort order
+    $maxsortorder = $DB->get_field_sql(
+        'SELECT COALESCE(MAX(sortorder), -1) FROM {imagemap_area} WHERE imagemapid = ?',
+        array($imagemapid)
+    );
+    $area->sortorder = $maxsortorder + 1;
+    $DB->insert_record('imagemap_area', $area);
+}
 
 redirect(new moodle_url('/mod/imagemap/areas.php', array('id' => $cmid)),
          get_string('changessaved'), null, \core\output\notification::NOTIFY_SUCCESS);

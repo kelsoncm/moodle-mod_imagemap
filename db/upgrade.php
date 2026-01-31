@@ -38,5 +38,23 @@ function xmldb_imagemap_upgrade($oldversion) {
     // Automatically generated Moodle v3.9.0 release upgrade line.
     // Put any upgrade step following this.
 
+    if ($oldversion < 2026013001) {
+        // Define field activefilter to be changed to text.
+        $table = new xmldb_table('imagemap_area');
+        $field = new xmldb_field('activefilter', XMLDB_TYPE_TEXT, null, null, null, null, null, 'conditioncmid');
+
+        // Launch change of type for field activefilter.
+        $dbman->change_field_type($table, $field);
+
+        // Define field inactivefilter to be changed to text.
+        $field = new xmldb_field('inactivefilter', XMLDB_TYPE_TEXT, null, null, null, null, null, 'activefilter');
+
+        // Launch change of type for field inactivefilter.
+        $dbman->change_field_type($table, $field);
+
+        // Imagemap savepoint reached.
+        upgrade_mod_savepoint(true, 2026013001, 'imagemap');
+    }
+
     return true;
 }

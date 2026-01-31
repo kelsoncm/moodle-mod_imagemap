@@ -59,10 +59,25 @@ $string['title'] = 'Título';
 $string['title_help'] = 'Título a ser exibido ao passar o mouse sobre a área';
 $string['conditioncmid'] = 'Condição de conclusão';
 $string['conditioncmid_help'] = 'Opcional: Selecione um módulo do curso. A área só estará ativa se este módulo estiver concluído.';
-$string['activefilter'] = 'Filtro ativo';
-$string['activefilter_help'] = 'Filtro CSS a ser aplicado quando a área estiver ativa (ex: none, grayscale(0))';
-$string['inactivefilter'] = 'Filtro inativo';
-$string['inactivefilter_help'] = 'Filtro CSS a ser aplicado quando a área estiver inativa (ex: grayscale(1), opacity(0.5))';
+$string['activefilter'] = 'CSS ativo';
+$string['activefilter_help'] = 'CSS a ser aplicado quando a área estiver ativa. Exemplos:<br>
+<strong>Filtros CSS:</strong><br>
+• <strong>filter: brightness(1.2);</strong> - Área mais brilhante<br>
+• <strong>filter: saturate(1.5);</strong> - Cores mais saturadas<br>
+• <strong>filter: drop-shadow(0 0 10px rgba(0,255,0,0.8));</strong> - Brilho verde<br>
+<strong>Bordas e fundos:</strong><br>
+• <strong>border: 3px solid #00ff00; background: rgba(0,255,0,0.2);</strong> - Borda verde com fundo<br>
+• <strong>box-shadow: 0 0 20px rgba(255,215,0,0.8);</strong> - Brilho dourado<br>
+• <strong>background: linear-gradient(45deg, rgba(255,0,0,0.3), rgba(0,0,255,0.3));</strong> - Gradiente';
+$string['inactivefilter'] = 'CSS inativo';
+$string['inactivefilter_help'] = 'CSS a ser aplicado quando a área estiver inativa. Exemplos:<br>
+<strong>Filtros CSS:</strong><br>
+• <strong>filter: grayscale(1) opacity(0.5);</strong> - Cinza e transparente (padrão)<br>
+• <strong>filter: blur(3px);</strong> - Área borrada<br>
+• <strong>filter: brightness(0.4) grayscale(0.5);</strong> - Escurecida<br>
+<strong>Fundos e overlays:</strong><br>
+• <strong>background: rgba(0,0,0,0.6);</strong> - Overlay escuro<br>
+• <strong>background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.3) 10px, rgba(0,0,0,0.3) 20px);</strong> - Listras diagonais';
 $string['nocondition'] = 'Sem condição';
 
 // View strings

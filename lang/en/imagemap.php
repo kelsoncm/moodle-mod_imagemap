@@ -59,10 +59,25 @@ $string['title'] = 'Title';
 $string['title_help'] = 'Title to display when hovering over the area';
 $string['conditioncmid'] = 'Completion condition';
 $string['conditioncmid_help'] = 'Optional: Select a course module. The area will only be active if this module is completed.';
-$string['activefilter'] = 'Active filter';
-$string['activefilter_help'] = 'CSS filter to apply when the area is active (e.g., none, grayscale(0))';
-$string['inactivefilter'] = 'Inactive filter';
-$string['inactivefilter_help'] = 'CSS filter to apply when the area is inactive (e.g., grayscale(1), opacity(0.5))';
+$string['activefilter'] = 'Active CSS';
+$string['activefilter_help'] = 'CSS to apply when the area is active. Examples:<br>
+<strong>CSS Filters:</strong><br>
+• <strong>filter: brightness(1.2);</strong> - Brighter area<br>
+• <strong>filter: saturate(1.5);</strong> - More saturated colors<br>
+• <strong>filter: drop-shadow(0 0 10px rgba(0,255,0,0.8));</strong> - Green glow<br>
+<strong>Borders and backgrounds:</strong><br>
+• <strong>border: 3px solid #00ff00; background: rgba(0,255,0,0.2);</strong> - Green border with background<br>
+• <strong>box-shadow: 0 0 20px rgba(255,215,0,0.8);</strong> - Golden glow<br>
+• <strong>background: linear-gradient(45deg, rgba(255,0,0,0.3), rgba(0,0,255,0.3));</strong> - Gradient';
+$string['inactivefilter'] = 'Inactive CSS';
+$string['inactivefilter_help'] = 'CSS to apply when the area is inactive. Examples:<br>
+<strong>CSS Filters:</strong><br>
+• <strong>filter: grayscale(1) opacity(0.5);</strong> - Gray and transparent (default)<br>
+• <strong>filter: blur(3px);</strong> - Blurred area<br>
+• <strong>filter: brightness(0.4) grayscale(0.5);</strong> - Darkened<br>
+<strong>Backgrounds and overlays:</strong><br>
+• <strong>background: rgba(0,0,0,0.6);</strong> - Dark overlay<br>
+• <strong>background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.3) 10px, rgba(0,0,0,0.3) 20px);</strong> - Diagonal stripes';
 $string['nocondition'] = 'No condition';
 
 // View strings
