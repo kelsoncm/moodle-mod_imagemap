@@ -27,9 +27,9 @@
 
 #area-form-container {
     position: fixed;
-    top: 10%;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     z-index: 1050;
     background: #fff;
     border: 1px solid #ddd;
@@ -38,6 +38,8 @@
     padding: 16px 18px;
     width: 520px;
     max-width: 95vw;
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .area-controls {

@@ -1,0 +1,17 @@
+{{#has_image}}
+<div class="imagemap-container" style="position: relative; display: inline-block;">
+    <canvas id="imagemap-canvas-{{imagemap_id}}" style="display: block;"></canvas>
+    <div id="imagemap-overlays-{{imagemap_id}}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+</div>
+{{#has_manage}}
+<div class="imagemap-manage">
+    <a href="{{manage_url}}" class="btn btn-secondary">{{manage_text}}</a>
+</div>
+{{/has_manage}}
+{{/has_image}}
+{{^has_image}}
+<div class="alert alert-warning">{{no_image_text}}</div>
+{{#has_manage}}
+<p><a href="{{edit_settings_url}}">{{edit_settings_text}}</a></p>
+{{/has_manage}}
+{{/has_image}}
