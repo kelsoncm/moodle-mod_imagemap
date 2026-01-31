@@ -1,0 +1,964 @@
+var ImageMapEditor = {
+    init: function() {
+        console.log('ImageMapEditor init called');
+        var data = window.imagemapEditorData || {};
+        console.log('Editor data:', data);
+        var canvas = document.getElementById('imagemap-canvas');
+        console.log('Canvas element:', canvas);
+        if (!canvas) {
+            console.error('Canvas element not found');
+            return;
+        }
+        var ctx = canvas.getContext('2d');
+        var img = new Image();
+        var drawing = false;
+        var draggingArea = false;
+        var resizingHandle = null;
+        var startX, startY;
+        var dragStartX, dragStartY;
+        var dragOriginalCoords = [];
+        var polyPoints = [];
+        var currentShape = 'rect';
+        var areasData = data.areasData || [];
+        var selectedAreaId = null;
+        var HANDLE_SIZE = 8;
+        var HANDLE_HIT_SIZE = 12; // Larger clickable area
+
+        img.onload = function() {
+            console.log('Image loaded, canvas dimensions:', img.width, 'x', img.height);
+            canvas.width = img.width;
+            canvas.height = img.height;
+            drawBase();
+        };
+        img.onerror = function() {
+            console.error('Failed to load image:', data.imageUrl);
+        };
+        console.log('Setting image source to:', data.imageUrl);
+        img.src = data.imageUrl || '';
+
+        function drawBase() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            drawExistingAreas();
+        }
+
+        function drawExistingAreas() {
+            areasData.forEach(function(area) {
+                drawArea(area, area.id === selectedAreaId);
+            });
+            // Draw handles for selected area
+            if (selectedAreaId) {
+                var selectedArea = getAreaById(selectedAreaId);
+                if (selectedArea) {
+                    drawHandles(selectedArea);
+                }
+            }
+        }
+
+        function drawArea(area, highlight) {
+            var coords = parseCoords(area.coords);
+            if (!coords.length) {
+                return;
+            }
+
+            ctx.save();
+            ctx.strokeStyle = highlight ? '#FF6F00' : '#0073e6';
+            ctx.fillStyle = highlight ? 'rgba(255, 111, 0, 0.25)' : 'rgba(0, 115, 230, 0.2)';
+            ctx.lineWidth = highlight ? 3 : 2;
+
+            if (area.shape === 'rect') {
+                var x1 = Math.min(coords[0], coords[2]);
+                var y1 = Math.min(coords[1], coords[3]);
+                var x2 = Math.max(coords[0], coords[2]);
+                var y2 = Math.max(coords[1], coords[3]);
+                var w = x2 - x1;
+                var h = y2 - y1;
+                ctx.beginPath();
+                ctx.rect(x1, y1, w, h);
+                ctx.fill();
+                ctx.stroke();
+            } else if (area.shape === 'circle') {
+                ctx.beginPath();
+                ctx.arc(coords[0], coords[1], coords[2], 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            } else if (area.shape === 'poly') {
+                ctx.beginPath();
+                ctx.moveTo(coords[0], coords[1]);
+                for (var i = 2; i < coords.length; i += 2) {
+                    ctx.lineTo(coords[i], coords[i + 1]);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        function drawHandles(area) {
+            var coords = parseCoords(area.coords);
+
+            if (area.shape === 'rect') {
+                var x1 = Math.min(coords[0], coords[2]);
+                var y1 = Math.min(coords[1], coords[3]);
+                var x2 = Math.max(coords[0], coords[2]);
+                var y2 = Math.max(coords[1], coords[3]);
+                var handles = [
+                    {x: x1, y: y1, cursor: 'nw-resize', pos: 'nw'},
+                    {x: (x1+x2)/2, y: y1, cursor: 'n-resize', pos: 'n'},
+                    {x: x2, y: y1, cursor: 'ne-resize', pos: 'ne'},
+                    {x: x2, y: (y1+y2)/2, cursor: 'e-resize', pos: 'e'},
+                    {x: x2, y: y2, cursor: 'se-resize', pos: 'se'},
+                    {x: (x1+x2)/2, y: y2, cursor: 's-resize', pos: 's'},
+                    {x: x1, y: y2, cursor: 'sw-resize', pos: 'sw'},
+                    {x: x1, y: (y1+y2)/2, cursor: 'w-resize', pos: 'w'}
+                ];
+                handles.forEach(function(h) {
+                    drawHandle(h.x, h.y);
+                });
+            } else if (area.shape === 'circle') {
+                var cx = coords[0], cy = coords[1], r = coords[2];
+                var handles = [
+                    {x: cx, y: cy - r, pos: 'n'},
+                    {x: cx + r, y: cy, pos: 'e'},
+                    {x: cx, y: cy + r, pos: 's'},
+                    {x: cx - r, y: cy, pos: 'w'}
+                ];
+                handles.forEach(function(h) {
+                    drawHandle(h.x, h.y);
+                });
+            } else if (area.shape === 'poly') {
+                for (var i = 0; i < coords.length; i += 2) {
+                    drawHandle(coords[i], coords[i+1]);
+                }
+            }
+        }
+
+        function drawHandle(x, y) {
+            ctx.save();
+            ctx.fillStyle = '#FFFFFF';
+            ctx.strokeStyle = '#FF6F00';
+            ctx.lineWidth = 2;
+            ctx.fillRect(x - HANDLE_SIZE/2, y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
+            ctx.strokeRect(x - HANDLE_SIZE/2, y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
+            ctx.restore();
+        }
+
+        function findHandleAt(x, y, area) {
+            if (!area) return null;
+            var coords = parseCoords(area.coords);
+
+            if (area.shape === 'rect') {
+                var x1 = Math.min(coords[0], coords[2]);
+                var y1 = Math.min(coords[1], coords[3]);
+                var x2 = Math.max(coords[0], coords[2]);
+                var y2 = Math.max(coords[1], coords[3]);
+                var handles = [
+                    {x: x1, y: y1, pos: 'nw'},
+                    {x: (x1+x2)/2, y: y1, pos: 'n'},
+                    {x: x2, y: y1, pos: 'ne'},
+                    {x: x2, y: (y1+y2)/2, pos: 'e'},
+                    {x: x2, y: y2, pos: 'se'},
+                    {x: (x1+x2)/2, y: y2, pos: 's'},
+                    {x: x1, y: y2, pos: 'sw'},
+                    {x: x1, y: (y1+y2)/2, pos: 'w'}
+                ];
+                for (var i = 0; i < handles.length; i++) {
+                    var dx = Math.abs(x - handles[i].x);
+                    var dy = Math.abs(y - handles[i].y);
+                    if (dx <= HANDLE_HIT_SIZE && dy <= HANDLE_HIT_SIZE) {
+                        return handles[i].pos;
+                    }
+                }
+            } else if (area.shape === 'circle') {
+                var cx = coords[0], cy = coords[1], r = coords[2];
+                var handles = [
+                    {x: cx, y: cy - r, pos: 'n'},
+                    {x: cx + r, y: cy, pos: 'e'},
+                    {x: cx, y: cy + r, pos: 's'},
+                    {x: cx - r, y: cy, pos: 'w'}
+                ];
+                for (var i = 0; i < handles.length; i++) {
+                    var dx = Math.abs(x - handles[i].x);
+                    var dy = Math.abs(y - handles[i].y);
+                    if (dx <= HANDLE_HIT_SIZE && dy <= HANDLE_HIT_SIZE) {
+                        return handles[i].pos;
+                    }
+                }
+            } else if (area.shape === 'poly') {
+                for (var i = 0; i < coords.length; i += 2) {
+                    var dx = Math.abs(x - coords[i]);
+                    var dy = Math.abs(y - coords[i+1]);
+                    if (dx <= HANDLE_HIT_SIZE && dy <= HANDLE_HIT_SIZE) {
+                        return i; // Return vertex index
+                    }
+                }
+            }
+            return null;
+        }
+
+        function findEdgeAt(x, y, coords) {
+            var EDGE_THRESHOLD = 10; // Distance from edge to detect click
+            
+            for (var i = 0; i < coords.length; i += 2) {
+                var x1 = coords[i];
+                var y1 = coords[i + 1];
+                var x2 = coords[(i + 2) % coords.length];
+                var y2 = coords[(i + 3) % coords.length];
+                
+                // Calculate distance from point to line segment
+                var A = x - x1;
+                var B = y - y1;
+                var C = x2 - x1;
+                var D = y2 - y1;
+                
+                var dot = A * C + B * D;
+                var lenSq = C * C + D * D;
+                var param = lenSq !== 0 ? dot / lenSq : -1;
+                
+                var xx, yy;
+                
+                if (param < 0) {
+                    xx = x1;
+                    yy = y1;
+                } else if (param > 1) {
+                    xx = x2;
+                    yy = y2;
+                } else {
+                    xx = x1 + param * C;
+                    yy = y1 + param * D;
+                }
+                
+                var dx = x - xx;
+                var dy = y - yy;
+                var distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance <= EDGE_THRESHOLD) {
+                    return {after: i + 2}; // Insert after this vertex
+                }
+            }
+            return null;
+        }
+
+        function parseCoords(coordsString) {
+            if (!coordsString) {
+                return [];
+            }
+            return coordsString.split(',').map(function(value) {
+                return parseFloat(value);
+            }).filter(function(value) {
+                return !isNaN(value);
+            });
+        }
+
+        var shapeSelector = document.getElementById('shape-selector');
+        if (shapeSelector) {
+            shapeSelector.addEventListener('change', function() {
+                currentShape = this.value;
+                clearDrawing();
+            });
+        }
+
+        var clearButton = document.getElementById('clear-drawing');
+        if (clearButton) {
+            clearButton.addEventListener('click', clearDrawing);
+        }
+
+        var finishPolyButton = document.getElementById('finish-poly');
+        if (finishPolyButton) {
+            finishPolyButton.addEventListener('click', function() {
+                if (polyPoints.length >= 3) {
+                    finishDrawing();
+                }
+            });
+        }
+
+        function clearDrawing() {
+            drawing = false;
+            draggingArea = false;
+            resizingHandle = null;
+            polyPoints = [];
+            selectedAreaId = null;
+            drawBase();
+            if (finishPolyButton) {
+                finishPolyButton.style.display = 'none';
+            }
+            closeAreaForm();
+        }
+
+        canvas.addEventListener('mousedown', function(e) {
+            if (e.button === 2) {
+                return;
+            }
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+
+            if (currentShape !== 'poly' && polyPoints.length === 0) {
+                // First check if clicking on a handle of the selected area
+                var selectedArea = selectedAreaId ? getAreaById(selectedAreaId) : null;
+                if (selectedArea) {
+                    var handle = findHandleAt(x, y, selectedArea);
+                    if (handle !== null) {
+                        resizingHandle = handle;
+                        dragStartX = x;
+                        dragStartY = y;
+                        dragOriginalCoords = parseCoords(selectedArea.coords);
+                        drawBase();
+                        return;
+                    }
+                }
+                
+                // Then check if clicking on an area
+                var hitArea = findAreaAt(x, y);
+                if (hitArea) {
+                    selectedAreaId = hitArea.id;
+                    // Check if clicking on a handle of this newly selected area
+                    var handle = findHandleAt(x, y, hitArea);
+                    if (handle !== null) {
+                        resizingHandle = handle;
+                        dragStartX = x;
+                        dragStartY = y;
+                        dragOriginalCoords = parseCoords(hitArea.coords);
+                        drawBase();
+                        return;
+                    }
+                    // Otherwise, dragging the area
+                    draggingArea = true;
+                    dragStartX = x;
+                    dragStartY = y;
+                    dragOriginalCoords = parseCoords(hitArea.coords);
+                    drawBase();
+                    return;
+                }
+                
+                // Clicked outside any area, deselect
+                selectedAreaId = null;
+                drawBase();
+            }
+
+            if (currentShape === 'poly') {
+                polyPoints.push({x: x, y: y});
+                drawBase();
+                drawPolygon();
+                if (polyPoints.length >= 3 && finishPolyButton) {
+                    finishPolyButton.style.display = 'inline-block';
+                }
+            } else {
+                drawing = true;
+                startX = x;
+                startY = y;
+            }
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+
+            if (resizingHandle !== null) {
+                var resizeArea = getAreaById(selectedAreaId);
+                if (!resizeArea) {
+                    return;
+                }
+                var newCoords = resizeShape(resizeArea.shape, dragOriginalCoords, resizingHandle, x, y, dragStartX, dragStartY);
+                resizeArea.coords = newCoords.join(',');
+                drawBase();
+                return;
+            }
+
+            if (draggingArea) {
+                var dragArea = getAreaById(selectedAreaId);
+                if (!dragArea) {
+                    return;
+                }
+
+                var dx = x - dragStartX;
+                var dy = y - dragStartY;
+                var moved = applyDeltaToCoords(dragOriginalCoords, dx, dy, dragArea.shape);
+                dragArea.coords = moved.join(',');
+                drawBase();
+                return;
+            }
+
+            // Update cursor based on what's under the mouse
+            if (!drawing && currentShape !== 'poly') {
+                var selectedArea = selectedAreaId ? getAreaById(selectedAreaId) : null;
+                var handle = selectedArea ? findHandleAt(x, y, selectedArea) : null;
+                
+                if (handle !== null) {
+                    // Over a handle - show resize cursor
+                    if (selectedArea.shape === 'rect') {
+                        var cursorMap = {
+                            'nw': 'nw-resize', 'n': 'n-resize', 'ne': 'ne-resize',
+                            'e': 'e-resize', 'se': 'se-resize', 's': 's-resize',
+                            'sw': 'sw-resize', 'w': 'w-resize'
+                        };
+                        canvas.style.cursor = cursorMap[handle] || 'pointer';
+                    } else if (selectedArea.shape === 'circle') {
+                        var cursorMap = {'n': 'n-resize', 'e': 'e-resize', 's': 's-resize', 'w': 'w-resize'};
+                        canvas.style.cursor = cursorMap[handle] || 'pointer';
+                    } else if (selectedArea.shape === 'poly') {
+                        canvas.style.cursor = 'pointer';
+                    }
+                } else if (selectedArea && selectedArea.shape === 'poly') {
+                    // Check if over an edge for adding vertex
+                    var coords = parseCoords(selectedArea.coords);
+                    var edge = findEdgeAt(x, y, coords);
+                    if (edge !== null) {
+                        canvas.style.cursor = 'copy'; // Indicates can add vertex
+                    } else {
+                        var hitArea = findAreaAt(x, y);
+                        canvas.style.cursor = hitArea ? 'move' : 'crosshair';
+                    }
+                } else {
+                    var hitArea = findAreaAt(x, y);
+                    if (hitArea) {
+                        // Over an area - show move cursor
+                        canvas.style.cursor = 'move';
+                    } else {
+                        // Not over anything - show crosshair for drawing
+                        canvas.style.cursor = 'crosshair';
+                    }
+                }
+            }
+
+            if (!drawing || currentShape === 'poly') {
+                return;
+            }
+
+            drawBase();
+
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+
+            if (currentShape === 'rect') {
+                ctx.rect(startX, startY, x - startX, y - startY);
+            } else if (currentShape === 'circle') {
+                // Draw circle from corner to corner (like rectangle)
+                var cx = (startX + x) / 2;
+                var cy = (startY + y) / 2;
+                var radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2)) / 2;
+                ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
+            }
+
+            ctx.stroke();
+        });
+
+        canvas.addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            
+            var selectedArea = selectedAreaId ? getAreaById(selectedAreaId) : null;
+            if (selectedArea && selectedArea.shape === 'poly') {
+                var coords = parseCoords(selectedArea.coords);
+                
+                // Check if double-clicking on a vertex handle (to delete)
+                var handle = findHandleAt(x, y, selectedArea);
+                if (handle !== null && coords.length > 6) { // Keep at least 3 vertices
+                    coords.splice(handle, 2); // Remove x,y pair
+                    selectedArea.coords = coords.join(',');
+                    drawBase();
+                    return;
+                }
+                
+                // Check if double-clicking on an edge (to add vertex)
+                var edgeInfo = findEdgeAt(x, y, coords);
+                if (edgeInfo !== null) {
+                    // Insert new vertex after the clicked edge
+                    coords.splice(edgeInfo.after, 0, x, y);
+                    selectedArea.coords = coords.join(',');
+                    drawBase();
+                    return;
+                }
+            }
+        });
+
+        canvas.addEventListener('mouseup', function(e) {
+            if (resizingHandle !== null) {
+                resizingHandle = null;
+                // Don't open form, just finish resizing
+                return;
+            }
+
+            if (draggingArea) {
+                draggingArea = false;
+                // Don't open form, just finish dragging
+                return;
+            }
+
+            if (!drawing) {
+                return;
+            }
+
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+
+            drawing = false;
+            finishDrawing(x, y);
+        });
+
+        canvas.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+            var area = findAreaAt(x, y);
+            if (area) {
+                selectedAreaId = area.id;
+                drawBase();
+                openEditForm(area);
+            }
+        });
+
+        function drawPolygon() {
+            if (polyPoints.length < 2) {
+                return;
+            }
+
+            ctx.strokeStyle = '#FF0000';
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(polyPoints[0].x, polyPoints[0].y);
+
+            for (var i = 1; i < polyPoints.length; i++) {
+                ctx.lineTo(polyPoints[i].x, polyPoints[i].y);
+            }
+
+            ctx.stroke();
+
+            polyPoints.forEach(function(point) {
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+        }
+
+        function finishDrawing(endX, endY) {
+            var coords = '';
+
+            if (currentShape === 'rect') {
+                coords = Math.round(startX) + ',' + Math.round(startY) + ',' +
+                    Math.round(endX) + ',' + Math.round(endY);
+            } else if (currentShape === 'circle') {
+                // Calculate circle from corner to corner
+                var cx = (startX + endX) / 2;
+                var cy = (startY + endY) / 2;
+                var radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)) / 2;
+                coords = Math.round(cx) + ',' + Math.round(cy) + ',' + Math.round(radius);
+            } else if (currentShape === 'poly') {
+                coords = polyPoints.map(function(p) {
+                    return Math.round(p.x) + ',' + Math.round(p.y);
+                }).join(',');
+            }
+
+            document.getElementById('form-shape').value = currentShape;
+            document.getElementById('form-coords').value = coords;
+            document.getElementById('form-areaid').value = '';
+            document.getElementById('area-form-title').textContent = (data.strings && data.strings.addarea) ? data.strings.addarea : 'Add area';
+            openAreaForm();
+
+            if (currentShape === 'poly' && finishPolyButton) {
+                finishPolyButton.style.display = 'none';
+            }
+        }
+
+        function openAreaForm() {
+            var overlay = document.getElementById('imagemap-overlay');
+            var container = document.getElementById('area-form-container');
+            if (overlay) {
+                overlay.style.display = 'block';
+            }
+            if (container) {
+                container.style.display = 'block';
+            }
+        }
+
+        function closeAreaForm() {
+            var overlay = document.getElementById('imagemap-overlay');
+            var container = document.getElementById('area-form-container');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+            if (container) {
+                container.style.display = 'none';
+            }
+        }
+
+        var closeButton = document.getElementById('close-area-form');
+        if (closeButton) {
+            closeButton.addEventListener('click', function() {
+                closeAreaForm();
+            });
+        }
+
+        var overlayEl = document.getElementById('imagemap-overlay');
+        if (overlayEl) {
+            overlayEl.addEventListener('click', function() {
+                closeAreaForm();
+            });
+        }
+
+        function openEditForm(area) {
+            selectedAreaId = area.id;
+            drawBase();
+            document.getElementById('form-areaid').value = area.id;
+            document.getElementById('form-shape').value = area.shape;
+            document.getElementById('form-coords').value = area.coords;
+            document.getElementById('title').value = area.title || '';
+            document.getElementById('linktype').value = area.linktype;
+            
+            // Update link target based on type
+            updateLinkTargetFields(area.linktype, area.linktarget);
+            
+            document.getElementById('conditioncmid').value = area.conditioncmid || 0;
+            document.getElementById('activefilter').value = area.activefilter || 'none';
+            document.getElementById('inactivefilter').value = area.inactivefilter || 'grayscale(1) opacity(0.5)';
+            document.getElementById('area-form-title').textContent = (data.strings && data.strings.editarea) ? data.strings.editarea : 'Edit area';
+            openAreaForm();
+        }
+        
+        // Setup link type change handler
+        var linktypeSelect = document.getElementById('linktype');
+        if (linktypeSelect) {
+            linktypeSelect.addEventListener('change', function() {
+                console.log('Linktype changed to:', this.value);
+                updateLinkTargetFields(this.value, '');
+            });
+            // Initialize on page load - show module by default
+            updateLinkTargetFields(linktypeSelect.value || 'module', '');
+        }
+        
+        // Setup form submit handler to ensure linktarget is filled
+        var areaForm = document.getElementById('area-form');
+        if (areaForm) {
+            areaForm.addEventListener('submit', function(e) {
+                var linktypeSelect = document.getElementById('linktype');
+                var linktargetHidden = document.getElementById('linktarget');
+                var linktype = linktypeSelect ? linktypeSelect.value : 'module';
+                
+                console.log('Form submitting, linktype:', linktype);
+                
+                // Get value from appropriate field
+                if (linktype === 'module') {
+                    var moduleSelect = document.getElementById('linktarget-module');
+                    if (moduleSelect && linktargetHidden) {
+                        linktargetHidden.value = moduleSelect.value;
+                        console.log('Set linktarget to module:', moduleSelect.value);
+                    }
+                } else if (linktype === 'section') {
+                    var sectionSelect = document.getElementById('linktarget-section');
+                    if (sectionSelect && linktargetHidden) {
+                        linktargetHidden.value = sectionSelect.value;
+                        console.log('Set linktarget to section:', sectionSelect.value);
+                    }
+                } else if (linktype === 'url') {
+                    var urlInput = document.getElementById('linktarget-url');
+                    if (urlInput && linktargetHidden) {
+                        linktargetHidden.value = urlInput.value;
+                        console.log('Set linktarget to url:', urlInput.value);
+                    }
+                }
+                
+                console.log('Final linktarget value:', linktargetHidden ? linktargetHidden.value : 'NULL');
+            });
+        }
+        
+        function updateLinkTargetFields(linktype, value) {
+            console.log('updateLinkTargetFields called:', linktype, value);
+            var moduleGroup = document.getElementById('module-select-group');
+            var sectionGroup = document.getElementById('section-select-group');
+            var urlGroup = document.getElementById('url-input-group');
+            var linktargetHidden = document.getElementById('linktarget');
+            
+            console.log('Groups found:', !!moduleGroup, !!sectionGroup, !!urlGroup);
+            
+            // Hide all
+            if (moduleGroup) moduleGroup.style.display = 'none';
+            if (sectionGroup) sectionGroup.style.display = 'none';
+            if (urlGroup) urlGroup.style.display = 'none';
+            
+            // Show relevant field
+            if (linktype === 'module' && moduleGroup) {
+                console.log('Showing module group');
+                moduleGroup.style.display = 'block';
+                var select = document.getElementById('linktarget-module');
+                if (value && select) {
+                    select.value = value;
+                    console.log('Set module value to:', value);
+                }
+                if (linktargetHidden && select) {
+                    // Remove old listeners to avoid duplicates
+                    var newSelect = select.cloneNode(true);
+                    select.parentNode.replaceChild(newSelect, select);
+                    newSelect.addEventListener('change', function() {
+                        linktargetHidden.value = this.value;
+                        console.log('Module changed, linktarget now:', this.value);
+                    });
+                    if (value) linktargetHidden.value = value;
+                    else if (newSelect.value) linktargetHidden.value = newSelect.value;
+                }
+            } else if (linktype === 'section' && sectionGroup) {
+                console.log('Showing section group');
+                sectionGroup.style.display = 'block';
+                var select = document.getElementById('linktarget-section');
+                if (value && select) {
+                    select.value = value;
+                    console.log('Set section value to:', value);
+                }
+                if (linktargetHidden && select) {
+                    var newSelect = select.cloneNode(true);
+                    select.parentNode.replaceChild(newSelect, select);
+                    newSelect.addEventListener('change', function() {
+                        linktargetHidden.value = this.value;
+                        console.log('Section changed, linktarget now:', this.value);
+                    });
+                    if (value) linktargetHidden.value = value;
+                    else if (newSelect.value) linktargetHidden.value = newSelect.value;
+                }
+            } else if (linktype === 'url' && urlGroup) {
+                console.log('Showing url group');
+                urlGroup.style.display = 'block';
+                var input = document.getElementById('linktarget-url');
+                if (value && input) {
+                    input.value = value;
+                    console.log('Set url value to:', value);
+                }
+                if (linktargetHidden && input) {
+                    var newInput = input.cloneNode(true);
+                    input.parentNode.replaceChild(newInput, input);
+                    newInput.addEventListener('input', function() {
+                        linktargetHidden.value = this.value;
+                        console.log('URL changed, linktarget now:', this.value);
+                    });
+                    if (value) linktargetHidden.value = value;
+                }
+            }
+        }
+        
+        // Setup autocomplete for module search
+        var moduleSearchInput = document.getElementById('linktarget-module-search');
+        var moduleSelect = document.getElementById('linktarget-module');
+        if (moduleSearchInput && moduleSelect) {
+            moduleSearchInput.addEventListener('input', function() {
+                var searchTerm = this.value.toLowerCase();
+                var options = moduleSelect.querySelectorAll('option');
+                options.forEach(function(option) {
+                    var text = option.textContent.toLowerCase();
+                    if (text.indexOf(searchTerm) !== -1) {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Setup autocomplete for condition module search
+        var conditionSearchInput = document.getElementById('conditioncmid-search');
+        var conditionSelect = document.getElementById('conditioncmid');
+        if (conditionSearchInput && conditionSelect) {
+            conditionSearchInput.addEventListener('input', function() {
+                var searchTerm = this.value.toLowerCase();
+                var options = conditionSelect.querySelectorAll('option');
+                options.forEach(function(option) {
+                    var text = option.textContent.toLowerCase();
+                    if (text.indexOf(searchTerm) !== -1 || option.value === '0') {
+                        option.style.display = '';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // CSS validation and preview functionality
+        function validateAndPreviewCSS(input, previewContainer, previewBox) {
+            var cssValue = input.value.trim();
+            
+            // Hide preview if empty
+            if (!cssValue || cssValue === 'none') {
+                previewContainer.style.display = 'none';
+                input.classList.remove('is-valid', 'is-invalid');
+                return;
+            }
+            
+            // Try to parse and apply CSS
+            var isValid = false;
+            try {
+                // Create a temporary element to test CSS
+                var testDiv = document.createElement('div');
+                testDiv.style.cssText = '';
+                
+                // Check if it's a filter property or full CSS
+                if (cssValue.indexOf(':') === -1 && cssValue.indexOf('(') !== -1) {
+                    // It's just a filter value like "grayscale(1)"
+                    testDiv.style.filter = cssValue;
+                    isValid = testDiv.style.filter !== '';
+                } else {
+                    // It's full CSS
+                    testDiv.style.cssText = cssValue;
+                    isValid = testDiv.style.length > 0;
+                }
+                
+                if (isValid) {
+                    // Apply to preview
+                    previewBox.style.cssText = 'width: 50px; height: 50px; background: white; ' + cssValue;
+                    previewContainer.style.display = 'block';
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                } else {
+                    throw new Error('Invalid CSS');
+                }
+            } catch (e) {
+                // Invalid CSS
+                previewContainer.style.display = 'none';
+                input.classList.remove('is-valid');
+                input.classList.add('is-invalid');
+            }
+        }
+
+        // Setup validation for activefilter
+        var activeFilterInput = document.getElementById('activefilter');
+        var activeFilterPreview = document.getElementById('activefilter-preview');
+        var activeFilterPreviewBox = document.getElementById('activefilter-preview-box');
+        if (activeFilterInput && activeFilterPreview && activeFilterPreviewBox) {
+            activeFilterInput.addEventListener('input', function() {
+                validateAndPreviewCSS(this, activeFilterPreview, activeFilterPreviewBox);
+            });
+            // Trigger initial validation
+            validateAndPreviewCSS(activeFilterInput, activeFilterPreview, activeFilterPreviewBox);
+        }
+
+        // Setup validation for inactivefilter
+        var inactiveFilterInput = document.getElementById('inactivefilter');
+        var inactiveFilterPreview = document.getElementById('inactivefilter-preview');
+        var inactiveFilterPreviewBox = document.getElementById('inactivefilter-preview-box');
+        if (inactiveFilterInput && inactiveFilterPreview && inactiveFilterPreviewBox) {
+            inactiveFilterInput.addEventListener('input', function() {
+                validateAndPreviewCSS(this, inactiveFilterPreview, inactiveFilterPreviewBox);
+            });
+            // Trigger initial validation
+            validateAndPreviewCSS(inactiveFilterInput, inactiveFilterPreview, inactiveFilterPreviewBox);
+        }
+
+        function findAreaAt(x, y) {
+            for (var i = areasData.length - 1; i >= 0; i--) {
+                var area = areasData[i];
+                if (isPointInArea(x, y, area)) {
+                    return area;
+                }
+            }
+            return null;
+        }
+
+        function getAreaById(id) {
+            for (var i = 0; i < areasData.length; i++) {
+                if (areasData[i].id === id) {
+                    return areasData[i];
+                }
+            }
+            return null;
+        }
+
+        function isPointInArea(x, y, area) {
+            var coords = parseCoords(area.coords);
+            if (area.shape === 'rect' && coords.length >= 4) {
+                var x1 = Math.min(coords[0], coords[2]);
+                var y1 = Math.min(coords[1], coords[3]);
+                var x2 = Math.max(coords[0], coords[2]);
+                var y2 = Math.max(coords[1], coords[3]);
+                return x >= x1 && x <= x2 && y >= y1 && y <= y2;
+            }
+            if (area.shape === 'circle' && coords.length >= 3) {
+                var dx = x - coords[0];
+                var dy = y - coords[1];
+                return (dx * dx + dy * dy) <= (coords[2] * coords[2]);
+            }
+            if (area.shape === 'poly' && coords.length >= 6) {
+                return pointInPolygon(x, y, coords);
+            }
+            return false;
+        }
+
+        function applyDeltaToCoords(coords, dx, dy, shape) {
+            var moved = [];
+            if (shape === 'circle') {
+                // Circle: [cx, cy, radius] - only move center, keep radius
+                moved.push(Math.round(coords[0] + dx));
+                moved.push(Math.round(coords[1] + dy));
+                moved.push(Math.round(coords[2])); // radius stays the same
+            } else {
+                // Rectangle and polygon: all values are x,y pairs
+                for (var i = 0; i < coords.length; i += 2) {
+                    moved.push(Math.round(coords[i] + dx));
+                    moved.push(Math.round(coords[i + 1] + dy));
+                }
+            }
+            return moved;
+        }
+
+        function resizeShape(shape, originalCoords, handle, mouseX, mouseY, startMouseX, startMouseY) {
+            var newCoords = originalCoords.slice();
+
+            if (shape === 'rect') {
+                var x1 = originalCoords[0];
+                var y1 = originalCoords[1];
+                var x2 = originalCoords[2];
+                var y2 = originalCoords[3];
+                var dx = mouseX - startMouseX;
+                var dy = mouseY - startMouseY;
+
+                switch(handle) {
+                    case 'nw': newCoords = [x1 + dx, y1 + dy, x2, y2]; break;
+                    case 'n':  newCoords = [x1, y1 + dy, x2, y2]; break;
+                    case 'ne': newCoords = [x1, y1 + dy, x2 + dx, y2]; break;
+                    case 'e':  newCoords = [x1, y1, x2 + dx, y2]; break;
+                    case 'se': newCoords = [x1, y1, x2 + dx, y2 + dy]; break;
+                    case 's':  newCoords = [x1, y1, x2, y2 + dy]; break;
+                    case 'sw': newCoords = [x1 + dx, y1, x2, y2 + dy]; break;
+                    case 'w':  newCoords = [x1 + dx, y1, x2, y2]; break;
+                }
+            } else if (shape === 'circle') {
+                var cx = originalCoords[0];
+                var cy = originalCoords[1];
+                var dx = mouseX - cx;
+                var dy = mouseY - cy;
+                var newRadius = Math.sqrt(dx * dx + dy * dy);
+                newCoords = [cx, cy, Math.round(newRadius)];
+            } else if (shape === 'poly') {
+                // handle is the vertex index
+                var vertexIndex = handle;
+                newCoords = originalCoords.slice();
+                newCoords[vertexIndex] = mouseX;
+                newCoords[vertexIndex + 1] = mouseY;
+            }
+
+            return newCoords;
+        }
+
+        function pointInPolygon(x, y, coords) {
+            var inside = false;
+            for (var i = 0, j = coords.length - 2; i < coords.length; i += 2) {
+                var xi = coords[i];
+                var yi = coords[i + 1];
+                var xj = coords[j];
+                var yj = coords[j + 1];
+                var intersect = ((yi > y) !== (yj > y)) &&
+                    (x < (xj - xi) * (y - yi) / (yj - yi + 0.00001) + xi);
+                if (intersect) {
+                    inside = !inside;
+                }
+                j = i;
+            }
+            return inside;
+        }
+    }
+};

@@ -1,0 +1,27 @@
+.mod_imagemap .imagemap-container {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.mod_imagemap .imagemap-container img,
+.mod_imagemap .imagemap-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+.mod_imagemap .imagemap-manage {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.mod_imagemap area[shape] {
+    cursor: pointer;
+}
+
+.mod_imagemap area[shape]:hover {
+    opacity: 0.8;
+}

@@ -1,0 +1,23 @@
+# Moodle specific
+/.moodle
+/config.php
+
+# IDE
+/.idea
+/.vscode
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+/phpunit.xml
+/behat.yml
+
+# Build artifacts
+/node_modules
+/vendor
+*.log

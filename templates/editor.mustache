@@ -1,0 +1,154 @@
+{{#has_image}}
+<div class="imagemap-editor-container">
+    <div class="area-controls">
+        <label><strong>{{shape_label}}:</strong></label>
+        <select id="shape-selector" class="custom-select" style="width: auto; margin-left: 10px;">
+            <option value="rect">{{shape_rect}}</option>
+            <option value="circle">{{shape_circle}}</option>
+            <option value="poly">{{shape_poly}}</option>
+        </select>
+        <button id="clear-drawing" class="btn btn-secondary ml-2">{{clear}}</button>
+        <button id="finish-poly" class="btn btn-primary ml-2" style="display: none;">{{finish}}</button>
+    </div>
+    
+    <div class="imagemap-canvas-wrapper">
+        <canvas id="imagemap-canvas"></canvas>
+    </div>
+    <div class="imagemap-overlay" id="imagemap-overlay"></div>
+
+    <div id="area-form-container" style="display: none;">
+        <h4 id="area-form-title">{{addarea}}</h4>
+        <form id="area-form" method="post" action="{{area_save_url}}">
+            <input type="hidden" name="sesskey" value="{{sesskey}}">
+            <input type="hidden" name="cmid" value="{{cmid}}">
+            <input type="hidden" name="imagemapid" value="{{imagemapid}}">
+            <input type="hidden" name="areaid" id="form-areaid" value="">
+            <input type="hidden" name="shape" id="form-shape" value="">
+            <input type="hidden" name="coords" id="form-coords" value="">
+            
+            <div class="form-group">
+                <label for="title">{{title_label}}:</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="linktype">{{linktype_label}}:</label>
+                <select class="form-control" id="linktype" name="linktype" required>
+                    <option value="module">{{linktype_module}}</option>
+                    <option value="section">{{linktype_section}}</option>
+                    <option value="url">{{linktype_url}}</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="module-select-group" style="display: none;">
+                <label for="linktarget-module-search">{{linktarget_label}} ({{linktype_module}}):</label>
+                <input type="text" class="form-control" id="linktarget-module-search" placeholder="Buscar módulo...">
+                <select class="form-control" id="linktarget-module" size="8" style="margin-top: 5px;">
+                    {{#sections_with_modules}}
+                    <optgroup label="{{sectionname}}">
+                        {{#modules}}
+                        <option value="{{id}}">{{name}} ({{modname}})</option>
+                        {{/modules}}
+                    </optgroup>
+                    {{/sections_with_modules}}
+                </select>
+            </div>
+            
+            <div class="form-group" id="section-select-group" style="display: none;">
+                <label for="linktarget-section">{{linktarget_label}} ({{linktype_section}}):</label>
+                <select class="form-control" id="linktarget-section">
+                    {{#all_sections}}
+                    <option value="{{id}}">{{name}}</option>
+                    {{/all_sections}}
+                </select>
+            </div>
+            
+            <div class="form-group" id="url-input-group" style="display: none;">
+                <label for="linktarget-url">{{linktarget_label}} ({{linktype_url}}):</label>
+                <input type="url" class="form-control" id="linktarget-url" placeholder="https://">
+                <small class="form-text text-muted">{{linktarget_help}}</small>
+            </div>
+            
+            <input type="hidden" id="linktarget" name="linktarget">
+            
+            <div class="form-group">
+                <label for="conditioncmid">{{conditioncmid_label}}:</label>
+                <input type="text" class="form-control" id="conditioncmid-search" placeholder="Buscar módulo..." style="margin-bottom: 5px;">
+                <select class="form-control" id="conditioncmid" name="conditioncmid" size="6">
+                    <option value="0">{{nocondition}}</option>
+                    {{#sections_with_modules}}
+                    <optgroup label="{{sectionname}}">
+                        {{#modules}}
+                        <option value="{{id}}">{{name}} ({{modname}})</option>
+                        {{/modules}}
+                    </optgroup>
+                    {{/sections_with_modules}}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="activefilter">{{activefilter_label}}:</label>
+                <textarea class="form-control css-input" id="activefilter" name="activefilter" rows="3" placeholder="filter: brightness(1.2); ou border: 3px solid #00ff00;">none</textarea>
+                <small class="form-text text-muted">{{activefilter_help}}</small>
+                <div id="activefilter-preview" style="margin-top: 5px; padding: 10px; border: 1px solid #ddd; display: none;">
+                    <small><strong>Preview:</strong></small>
+                    <div id="activefilter-preview-box" style="width: 50px; height: 50px; background: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%); background-size: 10px 10px; background-position: 0 0, 5px 5px;"></div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="inactivefilter">{{inactivefilter_label}}:</label>
+                <textarea class="form-control css-input" id="inactivefilter" name="inactivefilter" rows="3" placeholder="filter: grayscale(1); ou background: rgba(0,0,0,0.6);">grayscale(1) opacity(0.5)</textarea>
+                <small class="form-text text-muted">{{inactivefilter_help}}</small>
+                <div id="inactivefilter-preview" style="margin-top: 5px; padding: 10px; border: 1px solid #ddd; display: none;">
+                    <small><strong>Preview:</strong></small>
+                    <div id="inactivefilter-preview-box" style="width: 50px; height: 50px; background: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, #fff 25%, #fff 75%, #ccc 75%); background-size: 10px 10px; background-position: 0 0, 5px 5px;"></div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">{{savechanges}}</button>
+            <button type="button" class="btn btn-secondary" id="close-area-form">
+                {{cancel}}
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="area-list">
+    <h4>{{managereas}}</h4>
+    {{#has_areas}}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>{{title_label}}</th>
+                <th>{{shape_label}}</th>
+                <th>{{linktype_label}}</th>
+                <th>{{actions}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#areas}}
+            <tr>
+                <td>{{title}}</td>
+                <td>{{shape}}</td>
+                <td>{{linktype_display}}</td>
+                <td>
+                    <a href="{{delete_url}}"
+                       class="btn btn-sm btn-danger"
+                       onclick="return confirm('{{confirmdeletearea}}');">
+                        {{delete}}
+                    </a>
+                </td>
+            </tr>
+            {{/areas}}
+        </tbody>
+    </table>
+    {{/has_areas}}
+    {{^has_areas}}
+    <p>{{noareas}}</p>
+    {{/has_areas}}
+</div>
+
+{{else}}
+<div class="alert alert-warning">{{error_noimage}}</div>
+{{/has_image}}
