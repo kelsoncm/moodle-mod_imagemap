@@ -49,6 +49,67 @@
     border-radius: 5px;
 }
 
+/* Toolbar styles */
+.imagemap-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+}
+
+.imagemap-toolbar .btn-group-toggle .toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    transition: all 0.15s ease;
+}
+
+.imagemap-toolbar .btn-group-toggle .toolbar-btn svg {
+    flex-shrink: 0;
+}
+
+.imagemap-toolbar .btn-group-toggle .toolbar-btn.active {
+    z-index: 2;
+}
+
+.toolbar-btn[data-tool="hand"].active {
+    background-color: #6c757d;
+    color: #fff;
+    border-color: #6c757d;
+}
+
+.toolbar-btn[data-tool="rect"].active,
+.toolbar-btn[data-tool="circle"].active,
+.toolbar-btn[data-tool="poly"].active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+
+.toolbar-btn[data-tool="line"].active {
+    background-color: #17a2b8;
+    color: #fff;
+    border-color: #17a2b8;
+}
+
+.toolbar-btn[data-tool="eraser"].active {
+    background-color: #dc3545;
+    color: #fff;
+    border-color: #dc3545;
+}
+
+.toolbar-status {
+    margin-left: auto;
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+
 .area-list {
     margin-top: 20px;
 }

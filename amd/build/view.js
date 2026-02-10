@@ -1,34 +1,95 @@
-define([], function() {
+define([], function () {
     return {
-        init: function(imagemapId, areas, imageSrc) {
+        init: function (imagemapId, areas, imageSrc, lines) {
             var canvas = document.getElementById('imagemap-canvas-' + imagemapId);
             var overlaysContainer = document.getElementById('imagemap-overlays-' + imagemapId);
             if (!canvas || !overlaysContainer) return;
-            
+
             var ctx = canvas.getContext('2d');
             var img = new Image();
-            
-            img.onload = function() {
+            lines = lines || [];
+
+            img.onload = function () {
                 canvas.width = img.width;
                 canvas.height = img.height;
                 overlaysContainer.style.width = img.width + 'px';
                 overlaysContainer.style.height = img.height + 'px';
                 drawImageMap();
             };
-            
+
             img.src = imageSrc;
-            
+
+            function getAreaCenterById(areaId) {
+                for (var i = 0; i < areas.length; i++) {
+                    if (areas[i].id === areaId) {
+                        var a = areas[i];
+                        var coords = a.coords.split(',').map(function(v) { return parseFloat(v); });
+                        if (a.shape === 'rect' && coords.length >= 4) {
+                            return { x: (Math.min(coords[0], coords[2]) + Math.max(coords[0], coords[2])) / 2,
+                                     y: (Math.min(coords[1], coords[3]) + Math.max(coords[1], coords[3])) / 2 };
+                        } else if (a.shape === 'circle' && coords.length >= 3) {
+                            return { x: coords[0], y: coords[1] };
+                        } else if (a.shape === 'poly' && coords.length >= 6) {
+                            var cx = 0, cy = 0, n = coords.length / 2;
+                            for (var j = 0; j < coords.length; j += 2) { cx += coords[j]; cy += coords[j+1]; }
+                            return { x: cx / n, y: cy / n };
+                        }
+                    }
+                }
+                return null;
+            }
+
+            function drawLines() {
+                lines.forEach(function(line) {
+                    var from = getAreaCenterById(line.from_areaid);
+                    var to = getAreaCenterById(line.to_areaid);
+                    if (!from || !to) return;
+
+                    ctx.save();
+                    ctx.strokeStyle = '#ff9800';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(from.x, from.y);
+                    ctx.lineTo(to.x, to.y);
+                    ctx.stroke();
+
+                    // Arrowhead
+                    var angle = Math.atan2(to.y - from.y, to.x - from.x);
+                    var arrowLen = 12;
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = '#ff9800';
+                    ctx.beginPath();
+                    ctx.moveTo(to.x, to.y);
+                    ctx.lineTo(to.x - arrowLen * Math.cos(angle - Math.PI / 6),
+                               to.y - arrowLen * Math.sin(angle - Math.PI / 6));
+                    ctx.lineTo(to.x - arrowLen * Math.cos(angle + Math.PI / 6),
+                               to.y - arrowLen * Math.sin(angle + Math.PI / 6));
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(from.x, from.y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    ctx.restore();
+                });
+            }
+
             function drawImageMap() {
                 // Draw base image
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0);
-                
+
+                // Draw connection lines on canvas
+                drawLines();
+
                 // Clear existing overlays
                 overlaysContainer.innerHTML = '';
-                
+
                 // Create CSS overlays for each area
-                areas.forEach(function(area, index) {
-                    var coords = area.coords.split(',').map(function(v) { return parseFloat(v); });
+                areas.forEach(function (area, index) {
+                    var coords = area.coords.split(',').map(function (v) { return parseFloat(v); });
                     var overlay = document.createElement('div');
                     overlay.className = 'imagemap-area-overlay';
                     overlay.style.position = 'absolute';
@@ -36,7 +97,7 @@ define([], function() {
                     overlay.style.cursor = area.active && area.url ? 'pointer' : 'not-allowed';
                     overlay.title = area.title || '';
                     overlay.dataset.areaIndex = index;
-                    
+
                     // Apply custom CSS
                     var cssText = area.active ? (area.activefilter || '') : (area.inactivefilter || 'filter: grayscale(1) opacity(0.5);');
                     if (cssText && cssText !== 'none') {
@@ -46,7 +107,7 @@ define([], function() {
                             overlay.style.filter = cssText;
                         } else {
                             // It's full CSS
-                            cssText.split(';').forEach(function(rule) {
+                            cssText.split(';').forEach(function (rule) {
                                 if (!rule.trim()) return;
                                 var parts = rule.split(':');
                                 if (parts.length === 2) {
@@ -57,7 +118,7 @@ define([], function() {
                             });
                         }
                     }
-                    
+
                     // Position and clip the overlay based on shape
                     if (area.shape === 'rect' && coords.length >= 4) {
                         var x1 = Math.min(coords[0], coords[2]);
@@ -76,16 +137,16 @@ define([], function() {
                         overlay.style.height = (r * 2) + 'px';
                         overlay.style.borderRadius = '50%';
                     } else if (area.shape === 'poly' && coords.length >= 6) {
-                        var minX = Math.min.apply(null, coords.filter(function(v, i) { return i % 2 === 0; }));
-                        var maxX = Math.max.apply(null, coords.filter(function(v, i) { return i % 2 === 0; }));
-                        var minY = Math.min.apply(null, coords.filter(function(v, i) { return i % 2 === 1; }));
-                        var maxY = Math.max.apply(null, coords.filter(function(v, i) { return i % 2 === 1; }));
-                        
+                        var minX = Math.min.apply(null, coords.filter(function (v, i) { return i % 2 === 0; }));
+                        var maxX = Math.max.apply(null, coords.filter(function (v, i) { return i % 2 === 0; }));
+                        var minY = Math.min.apply(null, coords.filter(function (v, i) { return i % 2 === 1; }));
+                        var maxY = Math.max.apply(null, coords.filter(function (v, i) { return i % 2 === 1; }));
+
                         overlay.style.left = minX + 'px';
                         overlay.style.top = minY + 'px';
                         overlay.style.width = (maxX - minX) + 'px';
                         overlay.style.height = (maxY - minY) + 'px';
-                        
+
                         // Create polygon clip path
                         var clipPath = 'polygon(';
                         for (var i = 0; i < coords.length; i += 2) {
@@ -97,21 +158,21 @@ define([], function() {
                         overlay.style.clipPath = clipPath;
                         overlay.style.webkitClipPath = clipPath;
                     }
-                    
+
                     // Create inner element for background if CSS includes background
                     var inner = document.createElement('div');
                     inner.style.width = '100%';
                     inner.style.height = '100%';
                     inner.style.pointerEvents = 'none';
                     overlay.appendChild(inner);
-                    
+
                     // Add click handler
                     if (area.active && area.url) {
-                        overlay.addEventListener('click', function() {
+                        overlay.addEventListener('click', function () {
                             window.location.href = area.url;
                         });
                     }
-                    
+
                     overlaysContainer.appendChild(overlay);
                 });
             }

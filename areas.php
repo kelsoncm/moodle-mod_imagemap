@@ -46,6 +46,15 @@ $PAGE->requires->css('/mod/imagemap/editor.css');
 
 // Handle actions
 if ($action === 'delete' && $areaid && confirm_sesskey()) {
+    // Delete related lines first
+    $dbman_check = $DB->get_manager();
+    $linetable_check = new xmldb_table('imagemap_line');
+    if ($dbman_check->table_exists($linetable_check)) {
+        $DB->delete_records_select('imagemap_line',
+            'from_areaid = :from OR to_areaid = :to',
+            array('from' => $areaid, 'to' => $areaid)
+        );
+    }
     $DB->delete_records('imagemap_area', array('id' => $areaid, 'imagemapid' => $imagemap->id));
     redirect(new moodle_url('/mod/imagemap/areas.php', array('id' => $cm->id)), 
              get_string('deletearea', 'imagemap'), null, \core\output\notification::NOTIFY_SUCCESS);
@@ -97,11 +106,13 @@ if ($imagefile) {
         ));
         
         $areasfortemplate[] = array(
+            'id' => (int)$area->id,
             'title' => s($area->title),
             'shape' => s($area->shape),
             'linktype_display' => get_string('linktype_' . $area->linktype, 'imagemap'),
             'delete_url' => $deleteurl->out(),
-            'delete' => get_string('delete')
+            'delete' => get_string('delete'),
+            'lines_count' => 0
         );
     }
     
@@ -173,6 +184,33 @@ if ($imagefile) {
         }
     }
     
+    // Load lines between areas
+    $linesdata = array();
+    if ($dbman = $DB->get_manager()) {
+        $table = new xmldb_table('imagemap_line');
+        if ($dbman->table_exists($table)) {
+            $lines = $DB->get_records('imagemap_line', array('imagemapid' => $imagemap->id));
+            foreach ($lines as $line) {
+                $linesdata[] = array(
+                    'id' => (int)$line->id,
+                    'from_areaid' => (int)$line->from_areaid,
+                    'to_areaid' => (int)$line->to_areaid
+                );
+            }
+            // Count lines per area
+            foreach ($areasfortemplate as &$aft) {
+                $count = 0;
+                foreach ($linesdata as $ld) {
+                    if ($ld['from_areaid'] == $aft['id'] || $ld['to_areaid'] == $aft['id']) {
+                        $count++;
+                    }
+                }
+                $aft['lines_count'] = $count;
+            }
+            unset($aft);
+        }
+    }
+    
     $templatedata = array(
         'has_image' => true,
         'imageUrl' => $imageurl->out(),
@@ -216,7 +254,12 @@ if ($imagefile) {
         'delete' => get_string('delete'),
         'confirmdeletearea' => get_string('confirmdeletearea', 'imagemap'),
         'noareas' => get_string('noareas', 'imagemap'),
-        'error_noimage' => get_string('error:noimage', 'imagemap')
+        'error_noimage' => get_string('error:noimage', 'imagemap'),
+        // Toolbar strings
+        'tool_hand' => get_string('tool_hand', 'imagemap'),
+        'tool_line' => get_string('tool_line', 'imagemap'),
+        'tool_eraser' => get_string('tool_eraser', 'imagemap'),
+        'connections_label' => get_string('connections', 'imagemap')
     );
     
     // Load editor script inline instead of external to avoid loading issues
@@ -225,9 +268,22 @@ if ($imagefile) {
         window.imagemapEditorData = ' . json_encode(array(
             'imageUrl' => $imageurl->out(),
             'areasData' => $areasdata,
+            'linesData' => $linesdata,
+            'sesskey' => sesskey(),
+            'cmid' => $cm->id,
+            'imagemapid' => $imagemap->id,
             'strings' => array(
                 'addarea' => get_string('addarea', 'imagemap'),
-                'editarea' => get_string('editarea', 'imagemap')
+                'editarea' => get_string('editarea', 'imagemap'),
+                'confirmdeletearea' => get_string('confirmdeletearea', 'imagemap'),
+                'line_select_source' => get_string('line_select_source', 'imagemap'),
+                'line_select_dest' => get_string('line_select_dest', 'imagemap'),
+                'line_same_area' => get_string('line_same_area', 'imagemap'),
+                'line_duplicate' => get_string('line_duplicate', 'imagemap'),
+                'line_saved' => get_string('line_saved', 'imagemap'),
+                'line_deleted' => get_string('line_deleted', 'imagemap'),
+                'eraser_hint' => get_string('eraser_hint', 'imagemap'),
+                'confirm_delete_line' => get_string('confirm_delete_line', 'imagemap')
             )
         )) . ';
         ' . $jscode . '

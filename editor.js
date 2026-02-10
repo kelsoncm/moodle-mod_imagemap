@@ -18,11 +18,22 @@ var ImageMapEditor = {
         var dragStartX, dragStartY;
         var dragOriginalCoords = [];
         var polyPoints = [];
-        var currentShape = 'rect';
+        var currentTool = 'hand'; // Active tool: hand, rect, circle, poly, line, eraser
         var areasData = data.areasData || [];
+        var linesData = data.linesData || [];
         var selectedAreaId = null;
         var HANDLE_SIZE = 8;
-        var HANDLE_HIT_SIZE = 12; // Larger clickable area
+        var HANDLE_HIT_SIZE = 12;
+
+        // Line tool state
+        var lineSourceAreaId = null;
+        var statusEl = document.getElementById('toolbar-status');
+
+        function setStatus(msg) {
+            if (statusEl) {
+                statusEl.textContent = msg || '';
+            }
+        }
 
         img.onload = function() {
             console.log('Image loaded, canvas dimensions:', img.width, 'x', img.height);
@@ -40,6 +51,7 @@ var ImageMapEditor = {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0);
             drawExistingAreas();
+            drawLines();
         }
 
         function drawExistingAreas() {
@@ -61,10 +73,20 @@ var ImageMapEditor = {
                 return;
             }
 
+            // Eraser hover highlight
+            var isEraserHover = (currentTool === 'eraser' && area._eraserHover);
+
             ctx.save();
-            ctx.strokeStyle = highlight ? '#FF6F00' : '#0073e6';
-            ctx.fillStyle = highlight ? 'rgba(255, 111, 0, 0.25)' : 'rgba(0, 115, 230, 0.2)';
-            ctx.lineWidth = highlight ? 3 : 2;
+            if (isEraserHover) {
+                ctx.strokeStyle = '#dc3545';
+                ctx.fillStyle = 'rgba(220, 53, 69, 0.3)';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([6, 4]);
+            } else {
+                ctx.strokeStyle = highlight ? '#FF6F00' : '#0073e6';
+                ctx.fillStyle = highlight ? 'rgba(255, 111, 0, 0.25)' : 'rgba(0, 115, 230, 0.2)';
+                ctx.lineWidth = highlight ? 3 : 2;
+            }
 
             if (area.shape === 'rect') {
                 var x1 = Math.min(coords[0], coords[2]);
@@ -143,6 +165,108 @@ var ImageMapEditor = {
             ctx.fillRect(x - HANDLE_SIZE/2, y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
             ctx.strokeRect(x - HANDLE_SIZE/2, y - HANDLE_SIZE/2, HANDLE_SIZE, HANDLE_SIZE);
             ctx.restore();
+        }
+
+        function getAreaCenter(area) {
+            var coords = parseCoords(area.coords);
+            if (!coords.length) return null;
+            if (area.shape === 'rect' && coords.length >= 4) {
+                return {
+                    x: (Math.min(coords[0], coords[2]) + Math.max(coords[0], coords[2])) / 2,
+                    y: (Math.min(coords[1], coords[3]) + Math.max(coords[1], coords[3])) / 2
+                };
+            } else if (area.shape === 'circle' && coords.length >= 3) {
+                return { x: coords[0], y: coords[1] };
+            } else if (area.shape === 'poly' && coords.length >= 6) {
+                var cx = 0, cy = 0, n = coords.length / 2;
+                for (var i = 0; i < coords.length; i += 2) {
+                    cx += coords[i];
+                    cy += coords[i + 1];
+                }
+                return { x: cx / n, y: cy / n };
+            }
+            return null;
+        }
+
+        function drawLines() {
+            linesData.forEach(function(line) {
+                var fromArea = getAreaById(line.from_areaid);
+                var toArea = getAreaById(line.to_areaid);
+                if (!fromArea || !toArea) return;
+                var fromCenter = getAreaCenter(fromArea);
+                var toCenter = getAreaCenter(toArea);
+                if (!fromCenter || !toCenter) return;
+
+                var isEraserHover = (currentTool === 'eraser' && line._eraserHover);
+
+                ctx.save();
+                if (isEraserHover) {
+                    ctx.strokeStyle = '#dc3545';
+                    ctx.lineWidth = 4;
+                    ctx.setLineDash([6, 4]);
+                } else {
+                    ctx.strokeStyle = '#ff9800';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 4]);
+                }
+                ctx.beginPath();
+                ctx.moveTo(fromCenter.x, fromCenter.y);
+                ctx.lineTo(toCenter.x, toCenter.y);
+                ctx.stroke();
+
+                // Draw arrowhead at destination
+                var angle = Math.atan2(toCenter.y - fromCenter.y, toCenter.x - fromCenter.x);
+                var arrowLen = 12;
+                ctx.setLineDash([]);
+                ctx.fillStyle = isEraserHover ? '#dc3545' : '#ff9800';
+                ctx.beginPath();
+                ctx.moveTo(toCenter.x, toCenter.y);
+                ctx.lineTo(toCenter.x - arrowLen * Math.cos(angle - Math.PI / 6),
+                           toCenter.y - arrowLen * Math.sin(angle - Math.PI / 6));
+                ctx.lineTo(toCenter.x - arrowLen * Math.cos(angle + Math.PI / 6),
+                           toCenter.y - arrowLen * Math.sin(angle + Math.PI / 6));
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw small circles at endpoints
+                ctx.fillStyle = isEraserHover ? '#dc3545' : '#ff9800';
+                ctx.beginPath();
+                ctx.arc(fromCenter.x, fromCenter.y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+
+                ctx.restore();
+            });
+        }
+
+        function findLineAt(x, y) {
+            var LINE_HIT_DISTANCE = 8;
+            for (var i = linesData.length - 1; i >= 0; i--) {
+                var line = linesData[i];
+                var fromArea = getAreaById(line.from_areaid);
+                var toArea = getAreaById(line.to_areaid);
+                if (!fromArea || !toArea) continue;
+                var fromCenter = getAreaCenter(fromArea);
+                var toCenter = getAreaCenter(toArea);
+                if (!fromCenter || !toCenter) continue;
+
+                var dist = pointToSegmentDistance(x, y, fromCenter.x, fromCenter.y, toCenter.x, toCenter.y);
+                if (dist <= LINE_HIT_DISTANCE) {
+                    return line;
+                }
+            }
+            return null;
+        }
+
+        function pointToSegmentDistance(px, py, x1, y1, x2, y2) {
+            var A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
+            var dot = A * C + B * D;
+            var lenSq = C * C + D * D;
+            var param = lenSq !== 0 ? dot / lenSq : -1;
+            var xx, yy;
+            if (param < 0) { xx = x1; yy = y1; }
+            else if (param > 1) { xx = x2; yy = y2; }
+            else { xx = x1 + param * C; yy = y1 + param * D; }
+            return Math.sqrt((px - xx) * (px - xx) + (py - yy) * (py - yy));
         }
 
         function findHandleAt(x, y, area) {
@@ -252,18 +376,26 @@ var ImageMapEditor = {
             });
         }
 
-        var shapeSelector = document.getElementById('shape-selector');
-        if (shapeSelector) {
-            shapeSelector.addEventListener('change', function() {
-                currentShape = this.value;
+        // Toolbar button click handling
+        var toolbarButtons = document.querySelectorAll('.toolbar-btn[data-tool]');
+        toolbarButtons.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var tool = this.getAttribute('data-tool');
+                currentTool = tool;
+                // Update active state on all toolbar buttons
+                toolbarButtons.forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
                 clearDrawing();
+                // Update status
+                if (tool === 'line') {
+                    setStatus(data.strings.line_select_source || 'Click source shape');
+                } else if (tool === 'eraser') {
+                    setStatus(data.strings.eraser_hint || 'Click a shape or line to delete');
+                } else {
+                    setStatus('');
+                }
             });
-        }
-
-        var clearButton = document.getElementById('clear-drawing');
-        if (clearButton) {
-            clearButton.addEventListener('click', clearDrawing);
-        }
+        });
 
         var finishPolyButton = document.getElementById('finish-poly');
         if (finishPolyButton) {
@@ -280,11 +412,22 @@ var ImageMapEditor = {
             resizingHandle = null;
             polyPoints = [];
             selectedAreaId = null;
+            lineSourceAreaId = null;
+            // Clear eraser hover state
+            areasData.forEach(function(a) { a._eraserHover = false; });
+            linesData.forEach(function(l) { l._eraserHover = false; });
             drawBase();
             if (finishPolyButton) {
                 finishPolyButton.style.display = 'none';
             }
             closeAreaForm();
+            if (currentTool === 'line') {
+                setStatus(data.strings.line_select_source || 'Click source shape');
+            } else if (currentTool === 'eraser') {
+                setStatus(data.strings.eraser_hint || 'Click a shape or line to delete');
+            } else {
+                setStatus('');
+            }
         }
 
         canvas.addEventListener('mousedown', function(e) {
@@ -294,6 +437,106 @@ var ImageMapEditor = {
             var rect = canvas.getBoundingClientRect();
             var x = e.clientX - rect.left;
             var y = e.clientY - rect.top;
+
+            // ===== HAND TOOL (select / drag / resize) =====
+            if (currentTool === 'hand') {
+                // Check handle of already-selected area
+                var selectedArea = selectedAreaId ? getAreaById(selectedAreaId) : null;
+                if (selectedArea) {
+                    var handle = findHandleAt(x, y, selectedArea);
+                    if (handle !== null) {
+                        resizingHandle = handle;
+                        dragStartX = x;
+                        dragStartY = y;
+                        dragOriginalCoords = parseCoords(selectedArea.coords);
+                        drawBase();
+                        return;
+                    }
+                }
+                var hitArea = findAreaAt(x, y);
+                if (hitArea) {
+                    selectedAreaId = hitArea.id;
+                    var handle = findHandleAt(x, y, hitArea);
+                    if (handle !== null) {
+                        resizingHandle = handle;
+                        dragStartX = x;
+                        dragStartY = y;
+                        dragOriginalCoords = parseCoords(hitArea.coords);
+                        drawBase();
+                        return;
+                    }
+                    draggingArea = true;
+                    dragStartX = x;
+                    dragStartY = y;
+                    dragOriginalCoords = parseCoords(hitArea.coords);
+                    drawBase();
+                    return;
+                }
+                // Clicked empty space — deselect
+                selectedAreaId = null;
+                drawBase();
+                return;
+            }
+
+            // ===== ERASER TOOL =====
+            if (currentTool === 'eraser') {
+                // Check if clicking on a line first
+                var hitLine = findLineAt(x, y);
+                if (hitLine) {
+                    if (confirm(data.strings.confirm_delete_line || 'Delete this line?')) {
+                        deleteLine(hitLine);
+                    }
+                    return;
+                }
+                // Then check shapes
+                var hitArea = findAreaAt(x, y);
+                if (hitArea) {
+                    if (confirm(data.strings.confirmdeletearea || 'Delete this area?')) {
+                        deleteAreaViaAjax(hitArea);
+                    }
+                    return;
+                }
+                return;
+            }
+
+            // ===== LINE TOOL =====
+            if (currentTool === 'line') {
+                var hitArea = findAreaAt(x, y);
+                if (!hitArea) {
+                    setStatus(data.strings.line_select_source || 'Click source shape');
+                    return;
+                }
+                if (lineSourceAreaId === null) {
+                    lineSourceAreaId = hitArea.id;
+                    selectedAreaId = hitArea.id;
+                    drawBase();
+                    setStatus((data.strings.line_select_dest || 'Now click destination shape') +
+                              ' (' + (hitArea.title || 'Area #' + hitArea.id) + ' → ?)');
+                } else {
+                    if (hitArea.id === lineSourceAreaId) {
+                        setStatus(data.strings.line_same_area || 'Cannot connect shape to itself');
+                        return;
+                    }
+                    // Check for duplicate
+                    var dup = linesData.some(function(l) {
+                        return l.from_areaid === lineSourceAreaId && l.to_areaid === hitArea.id;
+                    });
+                    if (dup) {
+                        setStatus(data.strings.line_duplicate || 'This connection already exists');
+                        lineSourceAreaId = null;
+                        selectedAreaId = null;
+                        drawBase();
+                        return;
+                    }
+                    saveLine(lineSourceAreaId, hitArea.id);
+                    lineSourceAreaId = null;
+                    selectedAreaId = null;
+                }
+                return;
+            }
+
+            // ===== SHAPE TOOLS (rect, circle, poly) =====
+            var currentShape = currentTool; // rect, circle, poly
 
             if (currentShape !== 'poly' && polyPoints.length === 0) {
                 // First check if clicking on a handle of the selected area
@@ -356,6 +599,102 @@ var ImageMapEditor = {
             var rect = canvas.getBoundingClientRect();
             var x = e.clientX - rect.left;
             var y = e.clientY - rect.top;
+            var currentShape = currentTool;
+
+            // ===== HAND TOOL: cursor feedback =====
+            if (currentTool === 'hand') {
+                if (resizingHandle !== null) {
+                    var resizeArea = getAreaById(selectedAreaId);
+                    if (resizeArea) {
+                        var newCoords = resizeShape(resizeArea.shape, dragOriginalCoords, resizingHandle, x, y, dragStartX, dragStartY);
+                        resizeArea.coords = newCoords.join(',');
+                        drawBase();
+                    }
+                    return;
+                }
+                if (draggingArea) {
+                    var dragArea = getAreaById(selectedAreaId);
+                    if (dragArea) {
+                        var dx = x - dragStartX;
+                        var dy = y - dragStartY;
+                        var moved = applyDeltaToCoords(dragOriginalCoords, dx, dy, dragArea.shape);
+                        dragArea.coords = moved.join(',');
+                        drawBase();
+                    }
+                    return;
+                }
+                // Cursor feedback
+                var selectedArea = selectedAreaId ? getAreaById(selectedAreaId) : null;
+                var handle = selectedArea ? findHandleAt(x, y, selectedArea) : null;
+                if (handle !== null) {
+                    if (selectedArea.shape === 'rect') {
+                        var cursorMap = {'nw':'nw-resize','n':'n-resize','ne':'ne-resize','e':'e-resize','se':'se-resize','s':'s-resize','sw':'sw-resize','w':'w-resize'};
+                        canvas.style.cursor = cursorMap[handle] || 'pointer';
+                    } else if (selectedArea.shape === 'circle') {
+                        var cursorMap = {'n':'n-resize','e':'e-resize','s':'s-resize','w':'w-resize'};
+                        canvas.style.cursor = cursorMap[handle] || 'pointer';
+                    } else {
+                        canvas.style.cursor = 'pointer';
+                    }
+                } else {
+                    var hitArea = findAreaAt(x, y);
+                    canvas.style.cursor = hitArea ? 'move' : 'default';
+                }
+                return;
+            }
+
+            // ===== ERASER TOOL: hover feedback =====
+            if (currentTool === 'eraser') {
+                var anyHover = false;
+                areasData.forEach(function(a) { a._eraserHover = false; });
+                linesData.forEach(function(l) { l._eraserHover = false; });
+                var hitLine = findLineAt(x, y);
+                if (hitLine) {
+                    hitLine._eraserHover = true;
+                    canvas.style.cursor = 'pointer';
+                    anyHover = true;
+                } else {
+                    var hitArea = findAreaAt(x, y);
+                    if (hitArea) {
+                        hitArea._eraserHover = true;
+                        canvas.style.cursor = 'pointer';
+                        anyHover = true;
+                    }
+                }
+                if (!anyHover) {
+                    canvas.style.cursor = 'not-allowed';
+                }
+                drawBase();
+                return;
+            }
+
+            // ===== LINE TOOL: cursor feedback =====
+            if (currentTool === 'line') {
+                var hitArea = findAreaAt(x, y);
+                canvas.style.cursor = hitArea ? 'pointer' : 'default';
+                // Draw rubber-band line from source
+                if (lineSourceAreaId !== null) {
+                    drawBase();
+                    var src = getAreaById(lineSourceAreaId);
+                    if (src) {
+                        var c = getAreaCenter(src);
+                        if (c) {
+                            ctx.save();
+                            ctx.strokeStyle = '#ff9800';
+                            ctx.lineWidth = 2;
+                            ctx.setLineDash([4, 4]);
+                            ctx.beginPath();
+                            ctx.moveTo(c.x, c.y);
+                            ctx.lineTo(x, y);
+                            ctx.stroke();
+                            ctx.restore();
+                        }
+                    }
+                }
+                return;
+            }
+
+            // ===== SHAPE TOOLS =====
 
             if (resizingHandle !== null) {
                 var resizeArea = getAreaById(selectedAreaId);
@@ -480,14 +819,20 @@ var ImageMapEditor = {
 
         canvas.addEventListener('mouseup', function(e) {
             if (resizingHandle !== null) {
+                var resizedArea = getAreaById(selectedAreaId);
                 resizingHandle = null;
-                // Don't open form, just finish resizing
+                if (resizedArea) {
+                    saveAreaCoords(resizedArea);
+                }
                 return;
             }
 
             if (draggingArea) {
+                var draggedArea = getAreaById(selectedAreaId);
                 draggingArea = false;
-                // Don't open form, just finish dragging
+                if (draggedArea) {
+                    saveAreaCoords(draggedArea);
+                }
                 return;
             }
 
@@ -543,29 +888,30 @@ var ImageMapEditor = {
 
         function finishDrawing(endX, endY) {
             var coords = '';
+            var shape = currentTool; // rect, circle, or poly
 
-            if (currentShape === 'rect') {
+            if (shape === 'rect') {
                 coords = Math.round(startX) + ',' + Math.round(startY) + ',' +
                     Math.round(endX) + ',' + Math.round(endY);
-            } else if (currentShape === 'circle') {
+            } else if (shape === 'circle') {
                 // Calculate circle from corner to corner
                 var cx = (startX + endX) / 2;
                 var cy = (startY + endY) / 2;
                 var radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)) / 2;
                 coords = Math.round(cx) + ',' + Math.round(cy) + ',' + Math.round(radius);
-            } else if (currentShape === 'poly') {
+            } else if (shape === 'poly') {
                 coords = polyPoints.map(function(p) {
                     return Math.round(p.x) + ',' + Math.round(p.y);
                 }).join(',');
             }
 
-            document.getElementById('form-shape').value = currentShape;
+            document.getElementById('form-shape').value = shape;
             document.getElementById('form-coords').value = coords;
             document.getElementById('form-areaid').value = '';
             document.getElementById('area-form-title').textContent = (data.strings && data.strings.addarea) ? data.strings.addarea : 'Add area';
             openAreaForm();
 
-            if (currentShape === 'poly' && finishPolyButton) {
+            if (shape === 'poly' && finishPolyButton) {
                 finishPolyButton.style.display = 'none';
             }
         }
@@ -959,6 +1305,110 @@ var ImageMapEditor = {
                 j = i;
             }
             return inside;
+        }
+
+        // ===== AJAX: Save area coords (move/resize) =====
+        function saveAreaCoords(area) {
+            var params = new URLSearchParams();
+            params.append('sesskey', data.sesskey || '');
+            params.append('cmid', data.cmid || '');
+            params.append('areaid', area.id);
+            params.append('coords', area.coords);
+
+            fetch(M.cfg.wwwroot + '/mod/imagemap/area_update_coords.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: params.toString()
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(result) {
+                if (!result.success) {
+                    console.error('Error saving coords:', result.error);
+                    setStatus(result.error || 'Error saving position');
+                }
+            })
+            .catch(function(err) {
+                console.error('Error saving coords:', err);
+                setStatus('Error saving position');
+            });
+        }
+
+        // ===== AJAX: Save line =====
+        function saveLine(fromAreaId, toAreaId) {
+            var params = new URLSearchParams();
+            params.append('sesskey', data.sesskey || '');
+            params.append('cmid', data.cmid || '');
+            params.append('imagemapid', data.imagemapid || '');
+            params.append('from_areaid', fromAreaId);
+            params.append('to_areaid', toAreaId);
+
+            fetch(M.cfg.wwwroot + '/mod/imagemap/line_save.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: params.toString()
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(result) {
+                if (result.success) {
+                    linesData.push({
+                        id: result.id,
+                        from_areaid: fromAreaId,
+                        to_areaid: toAreaId
+                    });
+                    drawBase();
+                    setStatus(data.strings.line_saved || 'Line saved');
+                    setTimeout(function() {
+                        setStatus(data.strings.line_select_source || 'Click source shape');
+                    }, 1500);
+                } else {
+                    setStatus(result.error || 'Error saving line');
+                }
+            })
+            .catch(function(err) {
+                console.error('Error saving line:', err);
+                setStatus('Error saving line');
+            });
+        }
+
+        // ===== AJAX: Delete line =====
+        function deleteLine(line) {
+            var params = new URLSearchParams();
+            params.append('sesskey', data.sesskey || '');
+            params.append('cmid', data.cmid || '');
+            params.append('lineid', line.id);
+
+            fetch(M.cfg.wwwroot + '/mod/imagemap/line_delete.php', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: params.toString()
+            })
+            .then(function(resp) { return resp.json(); })
+            .then(function(result) {
+                if (result.success) {
+                    linesData = linesData.filter(function(l) { return l.id !== line.id; });
+                    drawBase();
+                    setStatus(data.strings.line_deleted || 'Line deleted');
+                    setTimeout(function() {
+                        setStatus(data.strings.eraser_hint || 'Click a shape or line to delete');
+                    }, 1500);
+                } else {
+                    setStatus(result.error || 'Error deleting line');
+                }
+            })
+            .catch(function(err) {
+                console.error('Error deleting line:', err);
+                setStatus('Error deleting line');
+            });
+        }
+
+        // ===== AJAX: Delete area (eraser tool) =====
+        function deleteAreaViaAjax(area) {
+            var deleteUrl = M.cfg.wwwroot + '/mod/imagemap/areas.php?id=' +
+                encodeURIComponent(data.cmid || '') +
+                '&action=delete&areaid=' + encodeURIComponent(area.id) +
+                '&sesskey=' + encodeURIComponent(data.sesskey || '');
+            // Redirect to delete (same as table delete link)
+            window.location.href = deleteUrl;
         }
     }
 };

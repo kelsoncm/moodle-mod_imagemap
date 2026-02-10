@@ -105,3 +105,20 @@ $string['exampledeleted'] = 'Example deleted successfully';
 $string['examplesaved'] = 'Example saved successfully';
 $string['noexamples'] = 'No examples defined yet';
 $string['confirmdeleteexample'] = 'Are you sure you want to delete this example?';
+
+// Toolbar / tools
+$string['tool_hand'] = 'Select';
+$string['tool_hand_help'] = 'Click to select, drag to move areas. Right-click to edit.';
+$string['tool_line'] = 'Line';
+$string['tool_line_help'] = 'Click on a source shape, then on a destination shape to create a connecting line.';
+$string['tool_eraser'] = 'Eraser';
+$string['tool_eraser_help'] = 'Click on a shape or line to delete it.';
+$string['line_select_source'] = 'Click on the source shape';
+$string['line_select_dest'] = 'Now click on the destination shape';
+$string['line_same_area'] = 'Cannot connect a shape to itself';
+$string['line_duplicate'] = 'This connection already exists';
+$string['line_saved'] = 'Line saved';
+$string['line_deleted'] = 'Line deleted';
+$string['eraser_hint'] = 'Click a shape or line to delete';
+$string['confirm_delete_line'] = 'Delete this connection line?';
+$string['connections'] = 'Connections';

@@ -60,5 +60,23 @@
         <INDEX NAME="sortorder" UNIQUE="false" FIELDS="sortorder"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="imagemap_line" COMMENT="Connection lines between imagemap areas">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="imagemapid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="from_areaid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Source area ID"/>
+        <FIELD NAME="to_areaid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Destination area ID"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="imagemapid" TYPE="foreign" FIELDS="imagemapid" REFTABLE="imagemap" REFFIELDS="id"/>
+        <KEY NAME="from_areaid" TYPE="foreign" FIELDS="from_areaid" REFTABLE="imagemap_area" REFFIELDS="id"/>
+        <KEY NAME="to_areaid" TYPE="foreign" FIELDS="to_areaid" REFTABLE="imagemap_area" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="imagemapid_from_to" UNIQUE="true" FIELDS="imagemapid, from_areaid, to_areaid"/>
+      </INDEXES>
+    </TABLE>
   </TABLES>
 </XMLDB>

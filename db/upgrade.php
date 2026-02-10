@@ -121,5 +121,29 @@ function xmldb_imagemap_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026013102, 'imagemap');
     }
 
+    if ($oldversion < 2026021001) {
+        // Define table imagemap_line to be created.
+        $table = new xmldb_table('imagemap_line');
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('imagemapid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('from_areaid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('to_areaid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('imagemapid', XMLDB_KEY_FOREIGN, array('imagemapid'), 'imagemap', array('id'));
+        $table->add_key('from_areaid', XMLDB_KEY_FOREIGN, array('from_areaid'), 'imagemap_area', array('id'));
+        $table->add_key('to_areaid', XMLDB_KEY_FOREIGN, array('to_areaid'), 'imagemap_area', array('id'));
+
+        $table->add_index('imagemapid_from_to', XMLDB_INDEX_UNIQUE, array('imagemapid', 'from_areaid', 'to_areaid'));
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        upgrade_mod_savepoint(true, 2026021001, 'imagemap');
+    }
+
     return true;
 }

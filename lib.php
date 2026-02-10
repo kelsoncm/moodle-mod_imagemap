@@ -107,6 +107,13 @@ function imagemap_delete_instance($id) {
     // Delete all areas
     $DB->delete_records('imagemap_area', array('imagemapid' => $imagemap->id));
 
+    // Delete all connection lines
+    $dbman = $DB->get_manager();
+    $linetable = new xmldb_table('imagemap_line');
+    if ($dbman->table_exists($linetable)) {
+        $DB->delete_records('imagemap_line', array('imagemapid' => $imagemap->id));
+    }
+
     // Delete the instance
     $DB->delete_records('imagemap', array('id' => $imagemap->id));
 

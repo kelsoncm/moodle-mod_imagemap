@@ -75,6 +75,20 @@ if ($imagefile) {
     // Get areas
     $areas = imagemap_get_areas($imagemap->id);
     
+    // Load connection lines
+    $linesviewdata = array();
+    $dbman = $DB->get_manager();
+    $linetable = new xmldb_table('imagemap_line');
+    if ($dbman->table_exists($linetable)) {
+        $lines = $DB->get_records('imagemap_line', array('imagemapid' => $imagemap->id));
+        foreach ($lines as $line) {
+            $linesviewdata[] = array(
+                'from_areaid' => (int)$line->from_areaid,
+                'to_areaid' => (int)$line->to_areaid
+            );
+        }
+    }
+    
     // Prepare area data for JavaScript
     $areadata = array();
     foreach ($areas as $area) {
@@ -82,6 +96,7 @@ if ($imagefile) {
         $url = imagemap_get_area_url($area, $course->id);
         
         $areadata[] = array(
+            'id' => (int)$area->id,
             'shape' => $area->shape,
             'coords' => $area->coords,
             'title' => $area->title,
@@ -108,7 +123,7 @@ if ($imagefile) {
     
     if (!empty($imagefile)) {
         // Add JavaScript to render the canvas imagemap with CSS overlays
-        $PAGE->requires->js_call_amd('mod_imagemap/view', 'init', array($imagemap->id, $areadata, $imageurl->out()));
+        $PAGE->requires->js_call_amd('mod_imagemap/view', 'init', array($imagemap->id, $areadata, $imageurl->out(), $linesviewdata));
     }
 
 }

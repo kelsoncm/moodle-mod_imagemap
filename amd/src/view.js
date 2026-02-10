@@ -1,12 +1,13 @@
 define([], function () {
     return {
-        init: function (imagemapId, areas, imageSrc) {
+        init: function (imagemapId, areas, imageSrc, lines) {
             var canvas = document.getElementById('imagemap-canvas-' + imagemapId);
             var overlaysContainer = document.getElementById('imagemap-overlays-' + imagemapId);
             if (!canvas || !overlaysContainer) return;
 
             var ctx = canvas.getContext('2d');
             var img = new Image();
+            lines = lines || [];
 
             img.onload = function () {
                 canvas.width = img.width;
@@ -18,10 +19,70 @@ define([], function () {
 
             img.src = imageSrc;
 
+            function getAreaCenterById(areaId) {
+                for (var i = 0; i < areas.length; i++) {
+                    if (areas[i].id === areaId) {
+                        var a = areas[i];
+                        var coords = a.coords.split(',').map(function(v) { return parseFloat(v); });
+                        if (a.shape === 'rect' && coords.length >= 4) {
+                            return { x: (Math.min(coords[0], coords[2]) + Math.max(coords[0], coords[2])) / 2,
+                                     y: (Math.min(coords[1], coords[3]) + Math.max(coords[1], coords[3])) / 2 };
+                        } else if (a.shape === 'circle' && coords.length >= 3) {
+                            return { x: coords[0], y: coords[1] };
+                        } else if (a.shape === 'poly' && coords.length >= 6) {
+                            var cx = 0, cy = 0, n = coords.length / 2;
+                            for (var j = 0; j < coords.length; j += 2) { cx += coords[j]; cy += coords[j+1]; }
+                            return { x: cx / n, y: cy / n };
+                        }
+                    }
+                }
+                return null;
+            }
+
+            function drawLines() {
+                lines.forEach(function(line) {
+                    var from = getAreaCenterById(line.from_areaid);
+                    var to = getAreaCenterById(line.to_areaid);
+                    if (!from || !to) return;
+
+                    ctx.save();
+                    ctx.strokeStyle = '#ff9800';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([8, 4]);
+                    ctx.beginPath();
+                    ctx.moveTo(from.x, from.y);
+                    ctx.lineTo(to.x, to.y);
+                    ctx.stroke();
+
+                    // Arrowhead
+                    var angle = Math.atan2(to.y - from.y, to.x - from.x);
+                    var arrowLen = 12;
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = '#ff9800';
+                    ctx.beginPath();
+                    ctx.moveTo(to.x, to.y);
+                    ctx.lineTo(to.x - arrowLen * Math.cos(angle - Math.PI / 6),
+                               to.y - arrowLen * Math.sin(angle - Math.PI / 6));
+                    ctx.lineTo(to.x - arrowLen * Math.cos(angle + Math.PI / 6),
+                               to.y - arrowLen * Math.sin(angle + Math.PI / 6));
+                    ctx.closePath();
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(from.x, from.y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+
+                    ctx.restore();
+                });
+            }
+
             function drawImageMap() {
                 // Draw base image
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0);
+
+                // Draw connection lines on canvas
+                drawLines();
 
                 // Clear existing overlays
                 overlaysContainer.innerHTML = '';
