@@ -1,0 +1,95 @@
+{{!
+    Modal dialog for selecting CSS examples from database
+
+    @package    mod_imagemap
+    @copyright  2026 Kelson C. M.
+    @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+<div id="css-examples-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="css-examples-modal-label" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="css-examples-modal-label">
+                    {{#str}}cssexamples, imagemap{{/str}}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{#str}}close{{/str}}"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs for active/inactive -->
+                <ul class="nav nav-tabs mb-3" id="examplesTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="examples-active-tab" type="button" role="tab" aria-controls="examples-active" aria-selected="true">
+                            {{#str}}activefilter, imagemap{{/str}}
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="examples-inactive-tab" type="button" role="tab" aria-controls="examples-inactive" aria-selected="false">
+                            {{#str}}inactivefilter, imagemap{{/str}}
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="examplesTabContent">
+                    <!-- Active Examples Tab -->
+                    <div class="tab-pane fade show active" id="examples-active" role="tabpanel" aria-labelledby="examples-active-tab">
+                        <div class="row" id="active-examples-list">
+                            {{#active_examples}}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100 css-example-card" data-css="{{css_text}}">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">{{{name}}}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="css-preview mb-2 text-center">
+                                            <canvas class="css-preview-canvas" data-css="{{css_text}}" width="190" height="80"></canvas>
+                                        </div>
+                                        <p class="card-text"><code>{{css_text}}</code></p>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button type="button" class="btn btn-sm btn-primary w-100 select-example-btn">
+                                            {{#str}}select{{/str}}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {{/active_examples}}
+                        </div>
+                        {{^active_examples}}
+                        <p class="text-muted">{{#str}}noexamples, imagemap{{/str}}</p>
+                        {{/active_examples}}
+                    </div>
+
+                    <!-- Inactive Examples Tab -->
+                    <div class="tab-pane fade" id="examples-inactive" role="tabpanel" aria-labelledby="examples-inactive-tab">
+                        <div class="row" id="inactive-examples-list">
+                            {{#inactive_examples}}
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card h-100 css-example-card" data-css="{{css_text}}">
+                                    <div class="card-header">
+                                        <h5 class="card-title mb-0">{{{name}}}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="css-preview mb-2 text-center">
+                                            <canvas class="css-preview-canvas" data-css="{{css_text}}" width="190" height="80"></canvas>
+                                        </div>
+                                        <p class="card-text"><code>{{css_text}}</code></p>
+                                    </div>
+                                    <div class="card-footer">
+                                        <button type="button" class="btn btn-sm btn-primary w-100 select-example-btn">
+                                            {{#str}}select{{/str}}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {{/inactive_examples}}
+                        </div>
+                        {{^inactive_examples}}
+                        <p class="text-muted">{{#str}}noexamples, imagemap{{/str}}</p>
+                        {{/inactive_examples}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

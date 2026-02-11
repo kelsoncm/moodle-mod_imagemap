@@ -92,8 +92,9 @@ if ($imagefile) {
     // Prepare area data for JavaScript
     $areadata = array();
     foreach ($areas as $area) {
-        $isactive = imagemap_is_area_active($area, $USER->id);
-        $url = imagemap_get_area_url($area, $course->id);
+        $targetdata = imagemap_get_area_target_data($area, $course, $context);
+        $isactive = $targetdata['active'];
+        $url = $targetdata['url'];
         
         $areadata[] = array(
             'id' => (int)$area->id,
@@ -102,6 +103,7 @@ if ($imagefile) {
             'title' => $area->title,
             'url' => $url ? $url->out() : '',
             'active' => $isactive,
+            'tooltip' => $targetdata['tooltip'],
             'activefilter' => $area->activefilter ?: 'none',
             'inactivefilter' => $area->inactivefilter ?: 'grayscale(1) opacity(0.5)'
         );

@@ -186,21 +186,28 @@ function imagemap_get_areas($imagemapid) {
 function imagemap_is_area_active($area, $userid) {
     global $DB;
 
-    if (empty($area->conditioncmid)) {
-        return true;
+    if ($area->targettype === 'module') {
+        $cm = get_coursemodule_from_id(null, (int)$area->targetid, 0, false, IGNORE_MISSING);
+        if (!$cm) {
+            return false;
+        }
+        $modinfo = get_fast_modinfo($cm->course, $userid);
+        $cminfo = $modinfo->get_cm($cm->id);
+        return $cminfo->uservisible && $cminfo->available;
     }
 
-    $cm = get_coursemodule_from_id(null, $area->conditioncmid);
-    
-    if (!$cm) {
-        return true;
+    if ($area->targettype === 'section') {
+        $sectionrecord = $DB->get_record('course_sections', array('id' => (int)$area->targetid),
+            'id, course', IGNORE_MISSING);
+        if (!$sectionrecord) {
+            return false;
+        }
+        $modinfo = get_fast_modinfo($sectionrecord->course, $userid);
+        $sectioninfo = $modinfo->get_section_info_by_id($sectionrecord->id, IGNORE_MISSING);
+        return $sectioninfo && $sectioninfo->uservisible && $sectioninfo->available;
     }
 
-    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $completion = new completion_info($course);
-    
-    $data = $completion->get_data($cm, false, $userid);
-    return $data->completionstate != COMPLETION_INCOMPLETE;
+    return false;
 }
 
 /**
@@ -211,26 +218,68 @@ function imagemap_is_area_active($area, $userid) {
  * @return moodle_url|null
  */
 function imagemap_get_area_url($area, $courseid) {
-    global $CFG;
-
-    switch ($area->linktype) {
-        case 'module':
-            if (!is_number($area->linktarget)) {
-                return null;
-            }
-            $cm = get_coursemodule_from_id(null, (int)$area->linktarget);
-            if ($cm) {
-                return new moodle_url('/mod/' . $cm->modname . '/view.php', array('id' => $area->linktarget));
-            }
-            return null;
-        case 'section':
-            if (!is_number($area->linktarget)) {
-                return null;
-            }
-            return new moodle_url('/course/view.php', array('id' => $courseid, 'section' => (int)$area->linktarget));
-        case 'url':
-            return new moodle_url($area->linktarget);
-        default:
-            return null;
+    if ($area->targettype === 'module') {
+        $cm = get_coursemodule_from_id(null, (int)$area->targetid, 0, false, IGNORE_MISSING);
+        if ($cm) {
+            return new moodle_url('/mod/' . $cm->modname . '/view.php', array('id' => $cm->id));
+        }
+        return null;
     }
+
+    if ($area->targettype === 'section') {
+        $course = get_course($courseid);
+        $modinfo = get_fast_modinfo($course);
+        $section = $modinfo->get_section_info_by_id((int)$area->targetid, IGNORE_MISSING);
+        if ($section) {
+            return course_get_url($course, (object)$section, array('navigation' => true));
+        }
+        return null;
+    }
+
+    return null;
+}
+
+/**
+ * Resolve target data for an area (url, active, tooltip).
+ *
+ * @param stdClass $area
+ * @param stdClass $course
+ * @param context_module $context
+ * @return array{url:moodle_url|null,active:bool,tooltip:string}
+ */
+function imagemap_get_area_target_data($area, $course, $context) {
+    $data = array('url' => null, 'active' => false, 'tooltip' => '');
+
+    if ($area->targettype === 'module') {
+        $cm = get_coursemodule_from_id(null, (int)$area->targetid, $course->id, false, IGNORE_MISSING);
+        if (!$cm) {
+            return $data;
+        }
+        $data['url'] = new moodle_url('/mod/' . $cm->modname . '/view.php', array('id' => $cm->id));
+        $data['active'] = $cm->available && $cm->uservisible;
+        if (!$data['active']) {
+            $info = $cm->availableinfo ?? '';
+            $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, array('context' => $context))));
+            $data['tooltip'] = $tooltip !== '' ? $tooltip : get_string('arearestricted', 'imagemap');
+        }
+        return $data;
+    }
+
+    if ($area->targettype === 'section') {
+        $modinfo = get_fast_modinfo($course);
+        $section = $modinfo->get_section_info_by_id((int)$area->targetid, IGNORE_MISSING);
+        if (!$section) {
+            return $data;
+        }
+        $data['url'] = course_get_url($course, (object)$section, array('navigation' => true));
+        $data['active'] = $section->available && $section->uservisible;
+        if (!$data['active']) {
+            $info = $section->availableinfo ?? '';
+            $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, array('context' => $context))));
+            $data['tooltip'] = $tooltip !== '' ? $tooltip : get_string('arearestricted', 'imagemap');
+        }
+        return $data;
+    }
+
+    return $data;
 }

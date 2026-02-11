@@ -23,7 +23,6 @@
 
         <!-- Conteúdo da aba ativa -->
         <div class="css-tab-pane" id="active-pane">
-            {{#active_examples}}
             <div class="row">
             {{#active_examples}}
                 <div class="col-md-6 col-lg-4 mb-3">
@@ -34,8 +33,7 @@
                         </div>
                         <div class="card-body">
                             <div class="css-preview mb-2 text-center">
-                                <canvas class="css-preview-canvas" data-css="{{css_text}}" width="250" height="125"></canvas>
-                                <small class="text-muted d-block">{{#str}}preview{{/str}}</small>
+                                <canvas class="css-preview-canvas" data-css="{{css_text}}" width="190" height="80"></canvas>
                             </div>
                             <p class="card-text"><code>{{css_text}}</code></p>
                         </div>
@@ -47,7 +45,6 @@
                 </div>
             {{/active_examples}}
             </div>
-            {{/active_examples}}
             {{^active_examples}}
             <p>{{#str}}noexamples, imagemap{{/str}}</p>
             {{/active_examples}}
@@ -55,7 +52,6 @@
 
         <!-- Conteúdo da aba inativa -->
         <div class="css-tab-pane" id="inactive-pane">
-            {{#inactive_examples}}
             <div class="row">
             {{#inactive_examples}}
                 <div class="col-md-6 col-lg-4 mb-3">
@@ -66,8 +62,7 @@
                         </div>
                         <div class="card-body">
                             <div class="css-preview mb-2 text-center">
-                                <canvas class="css-preview-canvas" data-css="{{css_text}}" width="250" height="125"></canvas>
-                                <small class="text-muted d-block">{{#str}}preview{{/str}}</small>
+                                <canvas class="css-preview-canvas" data-css="{{css_text}}" width="190" height="80"></canvas>
                             </div>
                             <p class="card-text"><code>{{css_text}}</code></p>
                         </div>
@@ -79,7 +74,6 @@
                 </div>
             {{/inactive_examples}}
             </div>
-            {{/inactive_examples}}
             {{^inactive_examples}}
             <p>{{#str}}noexamples, imagemap{{/str}}</p>
             {{/inactive_examples}}

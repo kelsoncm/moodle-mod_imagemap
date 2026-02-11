@@ -293,6 +293,13 @@ define([], function () {
                 }
             }
 
+            // Helper function for textarea autoheight
+            function autoResizeTextarea(textarea) {
+                if (!textarea) return;
+                textarea.style.height = 'auto';
+                textarea.style.height = (textarea.scrollHeight) + 'px';
+            }
+
             function openAreaForm() {
                 var overlay = document.getElementById('imagemap-overlay');
                 var container = document.getElementById('area-form-container');
@@ -302,6 +309,11 @@ define([], function () {
                 if (container) {
                     container.style.display = 'block';
                 }
+                // Resize textareas after form is visible
+                setTimeout(function() {
+                    autoResizeTextarea(document.getElementById('activefilter'));
+                    autoResizeTextarea(document.getElementById('inactivefilter'));
+                }, 10);
             }
 
             function closeAreaForm() {
@@ -344,74 +356,39 @@ define([], function () {
                 });
             });
 
-            // CSS validation and preview functionality
-            function validateAndPreviewCSS(input, previewContainer, previewBox) {
-                var cssValue = input.value.trim();
-
-                // Hide preview if empty
-                if (!cssValue || cssValue === 'none') {
-                    previewContainer.style.display = 'none';
-                    input.classList.remove('is-valid', 'is-invalid');
-                    return;
-                }
-
-                // Try to parse and apply CSS
-                var isValid = false;
-                try {
-                    // Create a temporary element to test CSS
-                    var testDiv = document.createElement('div');
-                    testDiv.style.cssText = '';
-
-                    // Check if it's a filter property or full CSS
-                    if (cssValue.indexOf(':') === -1 && cssValue.indexOf('(') !== -1) {
-                        // It's just a filter value like "grayscale(1)"
-                        testDiv.style.filter = cssValue;
-                        isValid = testDiv.style.filter !== '';
-                    } else {
-                        // It's full CSS
-                        testDiv.style.cssText = cssValue;
-                        isValid = testDiv.style.length > 0;
-                    }
-
-                    if (isValid) {
-                        // Apply to preview
-                        previewBox.style.cssText = 'width: 50px; height: 50px; background: white; ' + cssValue;
-                        previewContainer.style.display = 'block';
-                        input.classList.remove('is-invalid');
-                        input.classList.add('is-valid');
-                    } else {
-                        throw new Error('Invalid CSS');
-                    }
-                } catch (e) {
-                    // Invalid CSS
-                    previewContainer.style.display = 'none';
-                    input.classList.remove('is-valid');
-                    input.classList.add('is-invalid');
-                }
-            }
-
-            // Setup validation for activefilter
+            // Setup canvas preview updates for CSS filters
             var activeFilterInput = document.getElementById('activefilter');
-            var activeFilterPreview = document.getElementById('activefilter-preview');
-            var activeFilterPreviewBox = document.getElementById('activefilter-preview-box');
-            if (activeFilterInput && activeFilterPreview && activeFilterPreviewBox) {
+            var activeFilterCanvas = document.getElementById('activefilter-preview-canvas');
+            if (activeFilterInput && activeFilterCanvas) {
                 activeFilterInput.addEventListener('input', function () {
-                    validateAndPreviewCSS(this, activeFilterPreview, activeFilterPreviewBox);
+                    var cssValue = this.value.trim();
+                    autoResizeTextarea(this);
+                    if (typeof CSSPreview !== 'undefined') {
+                        CSSPreview.draw(activeFilterCanvas, cssValue || 'none');
+                    }
                 });
-                // Trigger initial validation
-                validateAndPreviewCSS(activeFilterInput, activeFilterPreview, activeFilterPreviewBox);
+                // Initial render and resize
+                if (typeof CSSPreview !== 'undefined') {
+                    CSSPreview.draw(activeFilterCanvas, activeFilterInput.value || 'none');
+                }
+                autoResizeTextarea(activeFilterInput);
             }
 
-            // Setup validation for inactivefilter
             var inactiveFilterInput = document.getElementById('inactivefilter');
-            var inactiveFilterPreview = document.getElementById('inactivefilter-preview');
-            var inactiveFilterPreviewBox = document.getElementById('inactivefilter-preview-box');
-            if (inactiveFilterInput && inactiveFilterPreview && inactiveFilterPreviewBox) {
+            var inactiveFilterCanvas = document.getElementById('inactivefilter-preview-canvas');
+            if (inactiveFilterInput && inactiveFilterCanvas) {
                 inactiveFilterInput.addEventListener('input', function () {
-                    validateAndPreviewCSS(this, inactiveFilterPreview, inactiveFilterPreviewBox);
+                    var cssValue = this.value.trim();
+                    autoResizeTextarea(this);
+                    if (typeof CSSPreview !== 'undefined') {
+                        CSSPreview.draw(inactiveFilterCanvas, cssValue || 'grayscale(1) opacity(0.5)');
+                    }
                 });
-                // Trigger initial validation
-                validateAndPreviewCSS(inactiveFilterInput, inactiveFilterPreview, inactiveFilterPreviewBox);
+                // Initial render and resize
+                if (typeof CSSPreview !== 'undefined') {
+                    CSSPreview.draw(inactiveFilterCanvas, inactiveFilterInput.value || 'grayscale(1) opacity(0.5)');
+                }
+                autoResizeTextarea(inactiveFilterInput);
             }
 
             function openEditForm(area) {
@@ -428,6 +405,13 @@ define([], function () {
                 document.getElementById('inactivefilter').value = area.inactivefilter || 'grayscale(1) opacity(0.5)';
                 document.getElementById('area-form-title').textContent = (data.strings && data.strings.editarea) ? data.strings.editarea : 'Edit area';
                 openAreaForm();
+                // Trigger canvas preview updates after setting values
+                if (typeof CSSPreview !== 'undefined') {
+                    var activeCanvas = document.getElementById('activefilter-preview-canvas');
+                    var inactiveCanvas = document.getElementById('inactivefilter-preview-canvas');
+                    if (activeCanvas) CSSPreview.draw(activeCanvas, area.activefilter || 'none');
+                    if (inactiveCanvas) CSSPreview.draw(inactiveCanvas, area.inactivefilter || 'grayscale(1) opacity(0.5)');
+                }
             }
 
             function findAreaAt(x, y) {

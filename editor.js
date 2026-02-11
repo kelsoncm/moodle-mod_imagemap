@@ -916,6 +916,13 @@ var ImageMapEditor = {
             }
         }
 
+        // Helper function for textarea autoheight
+        function autoResizeTextarea(textarea) {
+            if (!textarea) return;
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+        }
+
         function openAreaForm() {
             var overlay = document.getElementById('imagemap-overlay');
             var container = document.getElementById('area-form-container');
@@ -925,6 +932,11 @@ var ImageMapEditor = {
             if (container) {
                 container.style.display = 'block';
             }
+            // Resize textareas after form is visible
+            setTimeout(function() {
+                autoResizeTextarea(document.getElementById('activefilter'));
+                autoResizeTextarea(document.getElementById('inactivefilter'));
+            }, 10);
         }
 
         function closeAreaForm() {
@@ -959,241 +971,235 @@ var ImageMapEditor = {
             document.getElementById('form-shape').value = area.shape;
             document.getElementById('form-coords').value = area.coords;
             document.getElementById('title').value = area.title || '';
-            document.getElementById('linktype').value = area.linktype;
-            
-            // Update link target based on type
-            updateLinkTargetFields(area.linktype, area.linktarget);
-            
-            document.getElementById('conditioncmid').value = area.conditioncmid || 0;
+            var targetSelect = document.getElementById('target-select');
+            if (targetSelect && area.targettype && area.targetid) {
+                targetSelect.value = area.targettype + ':' + area.targetid;
+                setTargetFromSelect();
+            }
             document.getElementById('activefilter').value = area.activefilter || 'none';
             document.getElementById('inactivefilter').value = area.inactivefilter || 'grayscale(1) opacity(0.5)';
             document.getElementById('area-form-title').textContent = (data.strings && data.strings.editarea) ? data.strings.editarea : 'Edit area';
             openAreaForm();
-        }
-        
-        // Setup link type change handler
-        var linktypeSelect = document.getElementById('linktype');
-        if (linktypeSelect) {
-            linktypeSelect.addEventListener('change', function() {
-                console.log('Linktype changed to:', this.value);
-                updateLinkTargetFields(this.value, '');
-            });
-            // Initialize on page load - show module by default
-            updateLinkTargetFields(linktypeSelect.value || 'module', '');
-        }
-        
-        // Setup form submit handler to ensure linktarget is filled
-        var areaForm = document.getElementById('area-form');
-        if (areaForm) {
-            areaForm.addEventListener('submit', function(e) {
-                var linktypeSelect = document.getElementById('linktype');
-                var linktargetHidden = document.getElementById('linktarget');
-                var linktype = linktypeSelect ? linktypeSelect.value : 'module';
-                
-                console.log('Form submitting, linktype:', linktype);
-                
-                // Get value from appropriate field
-                if (linktype === 'module') {
-                    var moduleSelect = document.getElementById('linktarget-module');
-                    if (moduleSelect && linktargetHidden) {
-                        linktargetHidden.value = moduleSelect.value;
-                        console.log('Set linktarget to module:', moduleSelect.value);
-                    }
-                } else if (linktype === 'section') {
-                    var sectionSelect = document.getElementById('linktarget-section');
-                    if (sectionSelect && linktargetHidden) {
-                        linktargetHidden.value = sectionSelect.value;
-                        console.log('Set linktarget to section:', sectionSelect.value);
-                    }
-                } else if (linktype === 'url') {
-                    var urlInput = document.getElementById('linktarget-url');
-                    if (urlInput && linktargetHidden) {
-                        linktargetHidden.value = urlInput.value;
-                        console.log('Set linktarget to url:', urlInput.value);
-                    }
-                }
-                
-                console.log('Final linktarget value:', linktargetHidden ? linktargetHidden.value : 'NULL');
-            });
-        }
-        
-        function updateLinkTargetFields(linktype, value) {
-            console.log('updateLinkTargetFields called:', linktype, value);
-            var moduleGroup = document.getElementById('module-select-group');
-            var sectionGroup = document.getElementById('section-select-group');
-            var urlGroup = document.getElementById('url-input-group');
-            var linktargetHidden = document.getElementById('linktarget');
-            
-            console.log('Groups found:', !!moduleGroup, !!sectionGroup, !!urlGroup);
-            
-            // Hide all
-            if (moduleGroup) moduleGroup.style.display = 'none';
-            if (sectionGroup) sectionGroup.style.display = 'none';
-            if (urlGroup) urlGroup.style.display = 'none';
-            
-            // Show relevant field
-            if (linktype === 'module' && moduleGroup) {
-                console.log('Showing module group');
-                moduleGroup.style.display = 'block';
-                var select = document.getElementById('linktarget-module');
-                if (value && select) {
-                    select.value = value;
-                    console.log('Set module value to:', value);
-                }
-                if (linktargetHidden && select) {
-                    // Remove old listeners to avoid duplicates
-                    var newSelect = select.cloneNode(true);
-                    select.parentNode.replaceChild(newSelect, select);
-                    newSelect.addEventListener('change', function() {
-                        linktargetHidden.value = this.value;
-                        console.log('Module changed, linktarget now:', this.value);
-                    });
-                    if (value) linktargetHidden.value = value;
-                    else if (newSelect.value) linktargetHidden.value = newSelect.value;
-                }
-            } else if (linktype === 'section' && sectionGroup) {
-                console.log('Showing section group');
-                sectionGroup.style.display = 'block';
-                var select = document.getElementById('linktarget-section');
-                if (value && select) {
-                    select.value = value;
-                    console.log('Set section value to:', value);
-                }
-                if (linktargetHidden && select) {
-                    var newSelect = select.cloneNode(true);
-                    select.parentNode.replaceChild(newSelect, select);
-                    newSelect.addEventListener('change', function() {
-                        linktargetHidden.value = this.value;
-                        console.log('Section changed, linktarget now:', this.value);
-                    });
-                    if (value) linktargetHidden.value = value;
-                    else if (newSelect.value) linktargetHidden.value = newSelect.value;
-                }
-            } else if (linktype === 'url' && urlGroup) {
-                console.log('Showing url group');
-                urlGroup.style.display = 'block';
-                var input = document.getElementById('linktarget-url');
-                if (value && input) {
-                    input.value = value;
-                    console.log('Set url value to:', value);
-                }
-                if (linktargetHidden && input) {
-                    var newInput = input.cloneNode(true);
-                    input.parentNode.replaceChild(newInput, input);
-                    newInput.addEventListener('input', function() {
-                        linktargetHidden.value = this.value;
-                        console.log('URL changed, linktarget now:', this.value);
-                    });
-                    if (value) linktargetHidden.value = value;
-                }
+            // Trigger canvas preview updates after setting values
+            if (typeof CSSPreview !== 'undefined') {
+                var activeCanvas = document.getElementById('activefilter-preview-canvas');
+                var inactiveCanvas = document.getElementById('inactivefilter-preview-canvas');
+                if (activeCanvas) CSSPreview.draw(activeCanvas, area.activefilter || 'none');
+                if (inactiveCanvas) CSSPreview.draw(inactiveCanvas, area.inactivefilter || 'grayscale(1) opacity(0.5)');
             }
         }
-        
-        // Setup autocomplete for module search
-        var moduleSearchInput = document.getElementById('linktarget-module-search');
-        var moduleSelect = document.getElementById('linktarget-module');
-        if (moduleSearchInput && moduleSelect) {
-            moduleSearchInput.addEventListener('input', function() {
-                var searchTerm = this.value.toLowerCase();
-                var options = moduleSelect.querySelectorAll('option');
-                options.forEach(function(option) {
-                    var text = option.textContent.toLowerCase();
-                    if (text.indexOf(searchTerm) !== -1) {
-                        option.style.display = '';
-                    } else {
-                        option.style.display = 'none';
-                    }
-                });
-            });
-        }
-        
-        // Setup autocomplete for condition module search
-        var conditionSearchInput = document.getElementById('conditioncmid-search');
-        var conditionSelect = document.getElementById('conditioncmid');
-        if (conditionSearchInput && conditionSelect) {
-            conditionSearchInput.addEventListener('input', function() {
-                var searchTerm = this.value.toLowerCase();
-                var options = conditionSelect.querySelectorAll('option');
-                options.forEach(function(option) {
-                    var text = option.textContent.toLowerCase();
-                    if (text.indexOf(searchTerm) !== -1 || option.value === '0') {
-                        option.style.display = '';
-                    } else {
-                        option.style.display = 'none';
-                    }
-                });
-            });
-        }
 
-        // CSS validation and preview functionality
-        function validateAndPreviewCSS(input, previewContainer, previewBox) {
-            var cssValue = input.value.trim();
-            
-            // Hide preview if empty
-            if (!cssValue || cssValue === 'none') {
-                previewContainer.style.display = 'none';
-                input.classList.remove('is-valid', 'is-invalid');
+        function setTargetFromSelect() {
+            var targetSelect = document.getElementById('target-select');
+            var targetTypeInput = document.getElementById('form-targettype');
+            var targetIdInput = document.getElementById('form-targetid');
+            if (!targetSelect || !targetTypeInput || !targetIdInput) {
                 return;
             }
+            var value = targetSelect.value || '';
+            var parts = value.split(':');
+            targetTypeInput.value = parts[0] || '';
+            targetIdInput.value = parts[1] || '';
+        }
+
+        var targetSelect = document.getElementById('target-select');
+        if (targetSelect) {
+            targetSelect.addEventListener('change', setTargetFromSelect);
+            setTargetFromSelect();
+        }
+
+        // ===== CSS Examples Modal Management =====
+        var currentModalTargetField = null;
+
+        function initializeCSSExamplesModal() {
+            // Find all "View Examples" buttons
+            var openButtons = document.querySelectorAll('.open-css-examples-btn');
+            openButtons.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var filterType = this.getAttribute('data-filter-type');
+                    var targetField = this.getAttribute('data-target-field');
+                    openCSSExamplesModal(filterType, targetField);
+                });
+            });
+
+            // Setup tab switching in modal
+            var activeTabBtn = document.getElementById('examples-active-tab');
+            var inactiveTabBtn = document.getElementById('examples-inactive-tab');
             
-            // Try to parse and apply CSS
-            var isValid = false;
-            try {
-                // Create a temporary element to test CSS
-                var testDiv = document.createElement('div');
-                testDiv.style.cssText = '';
-                
-                // Check if it's a filter property or full CSS
-                if (cssValue.indexOf(':') === -1 && cssValue.indexOf('(') !== -1) {
-                    // It's just a filter value like "grayscale(1)"
-                    testDiv.style.filter = cssValue;
-                    isValid = testDiv.style.filter !== '';
-                } else {
-                    // It's full CSS
-                    testDiv.style.cssText = cssValue;
-                    isValid = testDiv.style.length > 0;
+            if (activeTabBtn) {
+                activeTabBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    switchTab('active');
+                });
+            }
+            
+            if (inactiveTabBtn) {
+                inactiveTabBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    switchTab('inactive');
+                });
+            }
+
+            // Handle example card selection
+            var selectBtns = document.querySelectorAll('.select-example-btn');
+            selectBtns.forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var card = this.closest('.css-example-card');
+                    if (card && currentModalTargetField) {
+                        var cssValue = card.getAttribute('data-css');
+                        var targetField = document.getElementById(currentModalTargetField);
+                        if (targetField) {
+                            targetField.value = cssValue;
+                            // Trigger input event to update preview
+                            targetField.dispatchEvent(new Event('input'));
+                        }
+                        closeCSSExamplesModal();
+                    }
+                });
+            });
+
+            // Initialize canvas previews in modal
+            setTimeout(function() {
+                initializeCSSPreviews();
+            }, 100);
+        }
+
+        function switchTab(tabName) {
+            // Remove active class from all tabs and panes
+            var allTabBtns = document.querySelectorAll('#css-examples-modal .nav-link');
+            var allTabPanes = document.querySelectorAll('#css-examples-modal .tab-pane');
+            
+            allTabBtns.forEach(function(btn) {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            
+            allTabPanes.forEach(function(pane) {
+                pane.classList.remove('active', 'show');
+            });
+            
+            // Add active class to selected tab
+            if (tabName === 'active') {
+                var activeTabBtn = document.getElementById('examples-active-tab');
+                var activePane = document.getElementById('examples-active');
+                if (activeTabBtn) {
+                    activeTabBtn.classList.add('active');
+                    activeTabBtn.setAttribute('aria-selected', 'true');
                 }
-                
-                if (isValid) {
-                    // Apply to preview
-                    previewBox.style.cssText = 'width: 50px; height: 50px; background: white; ' + cssValue;
-                    previewContainer.style.display = 'block';
-                    input.classList.remove('is-invalid');
-                    input.classList.add('is-valid');
-                } else {
-                    throw new Error('Invalid CSS');
+                if (activePane) {
+                    activePane.classList.add('active', 'show');
                 }
-            } catch (e) {
-                // Invalid CSS
-                previewContainer.style.display = 'none';
-                input.classList.remove('is-valid');
-                input.classList.add('is-invalid');
+            } else if (tabName === 'inactive') {
+                var inactiveTabBtn = document.getElementById('examples-inactive-tab');
+                var inactivePane = document.getElementById('examples-inactive');
+                if (inactiveTabBtn) {
+                    inactiveTabBtn.classList.add('active');
+                    inactiveTabBtn.setAttribute('aria-selected', 'true');
+                }
+                if (inactivePane) {
+                    inactivePane.classList.add('active', 'show');
+                }
+            }
+            
+            // Reinitialize canvas previews for the active tab
+            initializeCSSPreviews();
+        }
+
+        function openCSSExamplesModal(filterType, targetField) {
+            currentModalTargetField = targetField;
+            var modal = document.getElementById('css-examples-modal');
+            if (modal) {
+                // Use Bootstrap modal if available
+                if (typeof bootstrap !== 'undefined') {
+                    var bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+                    bsModal.show();
+                    
+                    // Switch to appropriate tab
+                    setTimeout(function() {
+                        switchTab(filterType);
+                    }, 100);
+                } else {
+                    // Fallback for non-Bootstrap environments
+                    modal.style.display = 'block';
+                    modal.classList.add('show');
+                    switchTab(filterType);
+                }
             }
         }
 
-        // Setup validation for activefilter
-        var activeFilterInput = document.getElementById('activefilter');
-        var activeFilterPreview = document.getElementById('activefilter-preview');
-        var activeFilterPreviewBox = document.getElementById('activefilter-preview-box');
-        if (activeFilterInput && activeFilterPreview && activeFilterPreviewBox) {
-            activeFilterInput.addEventListener('input', function() {
-                validateAndPreviewCSS(this, activeFilterPreview, activeFilterPreviewBox);
-            });
-            // Trigger initial validation
-            validateAndPreviewCSS(activeFilterInput, activeFilterPreview, activeFilterPreviewBox);
+        function closeCSSExamplesModal() {
+            currentModalTargetField = null;
+            var modal = document.getElementById('css-examples-modal');
+            if (modal) {
+                if (typeof bootstrap !== 'undefined') {
+                    var bsModal = bootstrap.Modal.getInstance(modal);
+                    if (bsModal) {
+                        bsModal.hide();
+                    }
+                } else {
+                    modal.style.display = 'none';
+                    modal.classList.remove('show');
+                }
+            }
         }
 
-        // Setup validation for inactivefilter
-        var inactiveFilterInput = document.getElementById('inactivefilter');
-        var inactiveFilterPreview = document.getElementById('inactivefilter-preview');
-        var inactiveFilterPreviewBox = document.getElementById('inactivefilter-preview-box');
-        if (inactiveFilterInput && inactiveFilterPreview && inactiveFilterPreviewBox) {
-            inactiveFilterInput.addEventListener('input', function() {
-                validateAndPreviewCSS(this, inactiveFilterPreview, inactiveFilterPreviewBox);
+        function initializeCSSPreviews() {
+            var canvases = document.querySelectorAll('.css-preview-canvas');
+            canvases.forEach(function(canvas) {
+                var css = canvas.getAttribute('data-css') || '';
+                CSSPreview.draw(canvas, css);
             });
-            // Trigger initial validation
-            validateAndPreviewCSS(inactiveFilterInput, inactiveFilterPreview, inactiveFilterPreviewBox);
         }
+
+        // Canvas previews initialized by CSSPreview utility (css_preview.js)
+
+        // Initialize modal on page load
+        initializeCSSExamplesModal();
+
+        var areaForm = document.getElementById('area-form');
+        if (areaForm) {
+            areaForm.addEventListener('submit', function() {
+                setTargetFromSelect();
+            });
+        }
+
+        // Setup canvas preview updates for CSS filters
+        var activeFilterInput = document.getElementById('activefilter');
+        var activeFilterCanvas = document.getElementById('activefilter-preview-canvas');
+        if (activeFilterInput && activeFilterCanvas) {
+            activeFilterInput.addEventListener('input', function() {
+                var cssValue = this.value.trim();
+                autoResizeTextarea(this);
+                if (typeof CSSPreview !== 'undefined') {
+                    CSSPreview.draw(activeFilterCanvas, cssValue || 'none');
+                }
+            });
+            // Initial render and resize
+            if (typeof CSSPreview !== 'undefined') {
+                CSSPreview.draw(activeFilterCanvas, activeFilterInput.value || 'none');
+            }
+            autoResizeTextarea(activeFilterInput);
+        }
+
+        var inactiveFilterInput = document.getElementById('inactivefilter');
+        var inactiveFilterCanvas = document.getElementById('inactivefilter-preview-canvas');
+        if (inactiveFilterInput && inactiveFilterCanvas) {
+            inactiveFilterInput.addEventListener('input', function() {
+                var cssValue = this.value.trim();
+                autoResizeTextarea(this);
+                if (typeof CSSPreview !== 'undefined') {
+                    CSSPreview.draw(inactiveFilterCanvas, cssValue || 'grayscale(1) opacity(0.5)');
+                }
+            });
+            // Initial render and resize
+            if (typeof CSSPreview !== 'undefined') {
+                CSSPreview.draw(inactiveFilterCanvas, inactiveFilterInput.value || 'grayscale(1) opacity(0.5)');
+            }
+            autoResizeTextarea(inactiveFilterInput);
+        }
+
 
         function findAreaAt(x, y) {
             for (var i = areasData.length - 1; i >= 0; i--) {

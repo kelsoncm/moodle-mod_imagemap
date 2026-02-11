@@ -33,9 +33,8 @@ $areaid = optional_param('areaid', 0, PARAM_INT);
 $shape = required_param('shape', PARAM_ALPHA);
 $coords = required_param('coords', PARAM_TEXT);
 $title = required_param('title', PARAM_TEXT);
-$linktype = required_param('linktype', PARAM_ALPHA);
-$linktarget = required_param('linktarget', PARAM_TEXT);
-$conditioncmid = optional_param('conditioncmid', 0, PARAM_INT);
+$targettype = required_param('targettype', PARAM_ALPHA);
+$targetid = required_param('targetid', PARAM_INT);
 $activefilter = optional_param('activefilter', 'none', PARAM_RAW);
 $inactivefilter = optional_param('inactivefilter', 'grayscale(1) opacity(0.5)', PARAM_RAW);
 
@@ -53,21 +52,33 @@ if (!in_array($shape, array('circle', 'rect', 'poly'))) {
     print_error('error:invalidshape', 'imagemap');
 }
 
-// Validate linktype
-if (!in_array($linktype, array('module', 'section', 'url'))) {
-    print_error('error:invalidlinktype', 'imagemap');
+// Validate target type
+if (!in_array($targettype, array('module', 'section'))) {
+    print_error('error:invalidtargettype', 'imagemap');
 }
 
 $area = new stdClass();
 $area->imagemapid = $imagemapid;
 $area->shape = $shape;
 $area->coords = $coords;
-$area->linktype = $linktype;
-$area->linktarget = $linktarget;
+$area->targettype = $targettype;
+$area->targetid = $targetid;
 $area->title = $title;
-$area->conditioncmid = $conditioncmid ?: null;
 $area->activefilter = $activefilter;
 $area->inactivefilter = $inactivefilter;
+
+if ($targettype === 'module') {
+    $targetcm = get_coursemodule_from_id(null, $targetid, $course->id, false, IGNORE_MISSING);
+    if (!$targetcm) {
+        print_error('error:invalidtarget', 'imagemap');
+    }
+} else if ($targettype === 'section') {
+    $modinfo = get_fast_modinfo($course);
+    $targetsection = $modinfo->get_section_info_by_id($targetid, IGNORE_MISSING);
+    if (!$targetsection) {
+        print_error('error:invalidtarget', 'imagemap');
+    }
+}
 
 if ($areaid) {
     $existing = $DB->get_record('imagemap_area', array('id' => $areaid, 'imagemapid' => $imagemapid), '*', MUST_EXIST);

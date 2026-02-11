@@ -8,6 +8,8 @@ define([], function () {
             var ctx = canvas.getContext('2d');
             var img = new Image();
             lines = lines || [];
+            areas = areas || [];
+            var tooltipEl = null;
 
             img.onload = function () {
                 canvas.width = img.width;
@@ -18,6 +20,44 @@ define([], function () {
             };
 
             img.src = imageSrc;
+
+            function showTooltip(text, clientX, clientY) {
+                if (!text) {
+                    return;
+                }
+                if (!tooltipEl) {
+                    tooltipEl = document.createElement('div');
+                    tooltipEl.className = 'imagemap-tooltip';
+                    document.body.appendChild(tooltipEl);
+                }
+                tooltipEl.textContent = text;
+                tooltipEl.style.display = 'block';
+                tooltipEl.style.left = (clientX + 12 + window.scrollX) + 'px';
+                tooltipEl.style.top = (clientY + 12 + window.scrollY) + 'px';
+            }
+
+            function hideTooltip() {
+                if (tooltipEl) {
+                    tooltipEl.style.display = 'none';
+                }
+            }
+
+            document.addEventListener('click', function (event) {
+                if (tooltipEl && tooltipEl.style.display === 'block' && !tooltipEl.contains(event.target)) {
+                    hideTooltip();
+                }
+            });
+
+            function parseCoords(coordsString) {
+                if (!coordsString) {
+                    return [];
+                }
+                return coordsString.split(',').map(function (value) {
+                    return parseFloat(value);
+                }).filter(function (value) {
+                    return !isNaN(value);
+                });
+            }
 
             function getAreaCenterById(areaId) {
                 for (var i = 0; i < areas.length; i++) {
@@ -76,6 +116,47 @@ define([], function () {
                 });
             }
 
+            function drawAreas() {
+                areas.forEach(function (area) {
+                    var coords = parseCoords(area.coords);
+                    if (!coords.length) {
+                        return;
+                    }
+
+                    ctx.save();
+                    ctx.strokeStyle = area.active ? '#0073e6' : '#9e9e9e';
+                    ctx.fillStyle = area.active ? 'rgba(0, 115, 230, 0.18)' : 'rgba(158, 158, 158, 0.18)';
+                    ctx.lineWidth = 2;
+
+                    if (area.shape === 'rect' && coords.length >= 4) {
+                        var x1 = Math.min(coords[0], coords[2]);
+                        var y1 = Math.min(coords[1], coords[3]);
+                        var w = Math.abs(coords[2] - coords[0]);
+                        var h = Math.abs(coords[3] - coords[1]);
+                        ctx.beginPath();
+                        ctx.rect(x1, y1, w, h);
+                        ctx.fill();
+                        ctx.stroke();
+                    } else if (area.shape === 'circle' && coords.length >= 3) {
+                        ctx.beginPath();
+                        ctx.arc(coords[0], coords[1], coords[2], 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                    } else if (area.shape === 'poly' && coords.length >= 6) {
+                        ctx.beginPath();
+                        ctx.moveTo(coords[0], coords[1]);
+                        for (var i = 2; i < coords.length; i += 2) {
+                            ctx.lineTo(coords[i], coords[i + 1]);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+
+                    ctx.restore();
+                });
+            }
+
             function drawImageMap() {
                 // Draw base image
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -84,17 +165,23 @@ define([], function () {
                 // Draw connection lines on canvas
                 drawLines();
 
+                // Draw areas on canvas for visibility
+                drawAreas();
+
                 // Clear existing overlays
                 overlaysContainer.innerHTML = '';
 
                 // Create CSS overlays for each area
                 areas.forEach(function (area, index) {
-                    var coords = area.coords.split(',').map(function (v) { return parseFloat(v); });
+                    var coords = parseCoords(area.coords);
+                    if (!coords.length) {
+                        return;
+                    }
                     var overlay = document.createElement('div');
                     overlay.className = 'imagemap-area-overlay';
                     overlay.style.position = 'absolute';
-                    overlay.style.pointerEvents = area.active && area.url ? 'auto' : 'none';
-                    overlay.style.cursor = area.active && area.url ? 'pointer' : 'not-allowed';
+                    overlay.style.pointerEvents = (area.url || area.tooltip) ? 'auto' : 'none';
+                    overlay.style.cursor = area.active && area.url ? 'pointer' : (area.tooltip ? 'help' : 'not-allowed');
                     overlay.title = area.title || '';
                     overlay.dataset.areaIndex = index;
 
@@ -120,19 +207,25 @@ define([], function () {
                     }
 
                     // Position and clip the overlay based on shape
+                    var left = 0;
+                    var top = 0;
                     if (area.shape === 'rect' && coords.length >= 4) {
                         var x1 = Math.min(coords[0], coords[2]);
                         var y1 = Math.min(coords[1], coords[3]);
                         var w = Math.abs(coords[2] - coords[0]);
                         var h = Math.abs(coords[3] - coords[1]);
+                        left = x1;
+                        top = y1;
                         overlay.style.left = x1 + 'px';
                         overlay.style.top = y1 + 'px';
                         overlay.style.width = w + 'px';
                         overlay.style.height = h + 'px';
                     } else if (area.shape === 'circle' && coords.length >= 3) {
                         var cx = coords[0], cy = coords[1], r = coords[2];
-                        overlay.style.left = (cx - r) + 'px';
-                        overlay.style.top = (cy - r) + 'px';
+                        left = cx - r;
+                        top = cy - r;
+                        overlay.style.left = left + 'px';
+                        overlay.style.top = top + 'px';
                         overlay.style.width = (r * 2) + 'px';
                         overlay.style.height = (r * 2) + 'px';
                         overlay.style.borderRadius = '50%';
@@ -142,6 +235,8 @@ define([], function () {
                         var minY = Math.min.apply(null, coords.filter(function (v, i) { return i % 2 === 1; }));
                         var maxY = Math.max.apply(null, coords.filter(function (v, i) { return i % 2 === 1; }));
 
+                        left = minX;
+                        top = minY;
                         overlay.style.left = minX + 'px';
                         overlay.style.top = minY + 'px';
                         overlay.style.width = (maxX - minX) + 'px';
@@ -159,6 +254,13 @@ define([], function () {
                         overlay.style.webkitClipPath = clipPath;
                     }
 
+                    if (overlay.style.width && overlay.style.height) {
+                        overlay.style.backgroundImage = 'url("' + imageSrc + '")';
+                        overlay.style.backgroundRepeat = 'no-repeat';
+                        overlay.style.backgroundSize = img.width + 'px ' + img.height + 'px';
+                        overlay.style.backgroundPosition = '-' + left + 'px -' + top + 'px';
+                    }
+
                     // Create inner element for background if CSS includes background
                     var inner = document.createElement('div');
                     inner.style.width = '100%';
@@ -167,11 +269,17 @@ define([], function () {
                     overlay.appendChild(inner);
 
                     // Add click handler
-                    if (area.active && area.url) {
-                        overlay.addEventListener('click', function () {
+                    overlay.addEventListener('click', function (event) {
+                        if (area.active && area.url) {
                             window.location.href = area.url;
-                        });
-                    }
+                            return;
+                        }
+                        if (area.tooltip) {
+                            showTooltip(area.tooltip, event.clientX, event.clientY);
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                    });
 
                     overlaysContainer.appendChild(overlay);
                 });

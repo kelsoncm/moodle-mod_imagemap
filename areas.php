@@ -43,6 +43,8 @@ $PAGE->set_title(format_string($imagemap->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 $PAGE->requires->css('/mod/imagemap/editor.css');
+$PAGE->requires->css('/mod/imagemap/styles.css');
+$PAGE->requires->js('/mod/imagemap/css_preview.js');
 
 // Handle actions
 if ($action === 'delete' && $areaid && confirm_sesskey()) {
@@ -85,15 +87,16 @@ if ($imagefile) {
     $areasdata = array();
     $areasfortemplate = array();
     
+    $areasbyid = array();
     foreach ($areas as $area) {
+        $areasbyid[$area->id] = $area;
         $areasdata[] = array(
             'id' => (int)$area->id,
             'shape' => $area->shape,
             'coords' => $area->coords,
             'title' => $area->title,
-            'linktype' => $area->linktype,
-            'linktarget' => $area->linktarget,
-            'conditioncmid' => (int)$area->conditioncmid,
+            'targettype' => $area->targettype,
+            'targetid' => (int)$area->targetid,
             'activefilter' => $area->activefilter,
             'inactivefilter' => $area->inactivefilter
         );
@@ -109,7 +112,7 @@ if ($imagefile) {
             'id' => (int)$area->id,
             'title' => s($area->title),
             'shape' => s($area->shape),
-            'linktype_display' => get_string('linktype_' . $area->linktype, 'imagemap'),
+            'target_label' => '',
             'delete_url' => $deleteurl->out(),
             'delete' => get_string('delete'),
             'lines_count' => 0
@@ -119,6 +122,52 @@ if ($imagefile) {
     // Fetch CSS examples for active and inactive filters
     $active_examples = $DB->get_records('imagemap_css_examples', array('type' => 'active'), 'sortorder ASC, name ASC');
     $inactive_examples = $DB->get_records('imagemap_css_examples', array('type' => 'inactive'), 'sortorder ASC, name ASC');
+    
+    // If no examples exist, create default ones (same as admin.php)
+    if (empty($active_examples)) {
+        $test_examples = array(
+            array('type' => 'active', 'name' => 'No Effect', 'css_text' => 'none', 'sortorder' => 0),
+            array('type' => 'active', 'name' => 'Grayscale', 'css_text' => 'filter: grayscale(100%)', 'sortorder' => 1),
+            array('type' => 'active', 'name' => 'Opacity 50%', 'css_text' => 'filter: opacity(0.5)', 'sortorder' => 2),
+            array('type' => 'active', 'name' => 'Blur', 'css_text' => 'filter: blur(2px)', 'sortorder' => 3),
+        );
+        
+        foreach ($test_examples as $example) {
+            $record = new stdClass();
+            $record->type = $example['type'];
+            $record->name = $example['name'];
+            $record->css_text = $example['css_text'];
+            $record->sortorder = $example['sortorder'];
+            $record->timecreated = time();
+            $record->timemodified = time();
+            $DB->insert_record('imagemap_css_examples', $record);
+        }
+        
+        // Reload examples
+        $active_examples = $DB->get_records('imagemap_css_examples', array('type' => 'active'), 'sortorder ASC, name ASC');
+    }
+    
+    if (empty($inactive_examples)) {
+        $test_examples = array(
+            array('type' => 'inactive', 'name' => 'No Effect', 'css_text' => 'none', 'sortorder' => 0),
+            array('type' => 'inactive', 'name' => 'Grayed Out', 'css_text' => 'filter: grayscale(1) opacity(0.5)', 'sortorder' => 1),
+            array('type' => 'inactive', 'name' => 'Blurred', 'css_text' => 'filter: blur(3px)', 'sortorder' => 2),
+        );
+        
+        foreach ($test_examples as $example) {
+            $record = new stdClass();
+            $record->type = $example['type'];
+            $record->name = $example['name'];
+            $record->css_text = $example['css_text'];
+            $record->sortorder = $example['sortorder'];
+            $record->timecreated = time();
+            $record->timemodified = time();
+            $DB->insert_record('imagemap_css_examples', $record);
+        }
+        
+        // Reload examples
+        $inactive_examples = $DB->get_records('imagemap_css_examples', array('type' => 'inactive'), 'sortorder ASC, name ASC');
+    }
     
     $active_examples_template = array();
     $inactive_examples_template = array();
@@ -139,50 +188,88 @@ if ($imagefile) {
         );
     }
     
-    // Get completion modules organized by sections
+    // Build target options with hierarchy (sections, subsections, modules).
     $modinfo = get_fast_modinfo($course);
-    $sections_with_modules = array();
-    $all_modules_flat = array(); // For autocomplete search
-    
-    foreach ($modinfo->get_section_info_all() as $section) {
-        $section_modules = array();
-        
-        foreach ($modinfo->get_cms() as $modcm) {
-            if ($modcm->sectionnum == $section->section && 
-                $modcm->id != $cm->id && 
-                $modcm->completion > 0 &&
-                !$modcm->deletioninprogress) {
-                
-                $module_data = array(
-                    'id' => $modcm->id,
-                    'name' => format_string($modcm->name),
-                    'modname' => get_string('modulename', $modcm->modname)
-                );
-                
-                $section_modules[] = $module_data;
-                $all_modules_flat[] = $module_data;
+    $allsections = $modinfo->get_section_info_all();
+    $sectionwithchildren = array();
+    $delegatedchildren = array();
+
+    foreach ($allsections as $section) {
+        $sectiondelegated = $section->get_component_instance();
+        if ($sectiondelegated) {
+            $parentsection = $sectiondelegated->get_parent_section();
+            if ($parentsection) {
+                $sectionwithchildren[$parentsection->section][] = $section;
+                $delegatedchildren[$section->section] = true;
             }
         }
-        
-        if (!empty($section_modules)) {
-            $sectionname = get_section_name($course, $section);
-            $sections_with_modules[] = array(
-                'sectionname' => $sectionname,
-                'modules' => $section_modules
-            );
+    }
+
+    $modulelabels = array();
+    foreach ($modinfo->get_cms() as $modcm) {
+        if ($modcm->deletioninprogress) {
+            continue;
+        }
+        $modulelabels[$modcm->id] = format_string($modcm->name) .
+            ' (' . get_string('modulename', $modcm->modname) . ')';
+    }
+
+    $sectionlabels = array();
+    foreach ($allsections as $section) {
+        $sectionlabels[$section->id] = get_section_name($course, $section);
+    }
+
+    $targetoptions = array();
+    $indent = function(int $level): string {
+        return str_repeat('-- ', $level);
+    };
+    $add_section_option = function($section, int $level) use (&$targetoptions, $indent, $course) {
+        $targetoptions[] = array(
+            'value' => 'section:' . $section->id,
+            'label' => $indent($level) . get_section_name($course, $section)
+        );
+    };
+    $add_module_options = function($section, int $level) use (&$targetoptions, $indent, $modinfo, $cm) {
+        foreach ($modinfo->get_cms() as $modcm) {
+            if ($modcm->sectionnum == $section->section &&
+                $modcm->id != $cm->id &&
+                !$modcm->deletioninprogress) {
+                $targetoptions[] = array(
+                    'value' => 'module:' . $modcm->id,
+                    'label' => $indent($level) . format_string($modcm->name) .
+                        ' (' . get_string('modulename', $modcm->modname) . ')'
+                );
+            }
+        }
+    };
+
+    foreach ($allsections as $section) {
+        if (isset($delegatedchildren[$section->section])) {
+            continue;
+        }
+        $add_section_option($section, 0);
+        $add_module_options($section, 1);
+        if (isset($sectionwithchildren[$section->section])) {
+            foreach ($sectionwithchildren[$section->section] as $subsection) {
+                $add_section_option($subsection, 1);
+                $add_module_options($subsection, 2);
+            }
         }
     }
-    
-    // Also get all sections for section links
-    $all_sections = array();
-    foreach ($modinfo->get_section_info_all() as $section) {
-        if ($section->section > 0) { // Skip section 0
-            $all_sections[] = array(
-                'id' => $section->id,
-                'name' => get_section_name($course, $section)
-            );
+
+    foreach ($areasfortemplate as &$aft) {
+        $targetlabel = '';
+        $area = $areasbyid[$aft['id']] ?? null;
+        if ($area) {
+            if ($area->targettype === 'module' && isset($modulelabels[$area->targetid])) {
+                $targetlabel = $modulelabels[$area->targetid];
+            } else if ($area->targettype === 'section' && isset($sectionlabels[$area->targetid])) {
+                $targetlabel = $sectionlabels[$area->targetid];
+            }
         }
+        $aft['target_label'] = $targetlabel ?: get_string('targetmissing', 'imagemap');
     }
+    unset($aft);
     
     // Load lines between areas
     $linesdata = array();
@@ -211,6 +298,33 @@ if ($imagefile) {
         }
     }
     
+    // Prepare CSS examples modal
+    $active_examples_modal = array();
+    $inactive_examples_modal = array();
+    
+    foreach ($active_examples as $example) {
+        $active_examples_modal[] = array(
+            'name' => s($example->name),
+            'css_text' => s($example->css_text),
+        );
+    }
+    
+    foreach ($inactive_examples as $example) {
+        $inactive_examples_modal[] = array(
+            'name' => s($example->name),
+            'css_text' => s($example->css_text),
+        );
+    }
+    
+    $modal_data = array(
+        'active_examples' => $active_examples_modal,
+        'inactive_examples' => $inactive_examples_modal,
+    );
+    $css_examples_modal = $OUTPUT->render_from_template('mod_imagemap/css_examples_modal', $modal_data);
+    
+    // Debug: Check examples count
+    echo "<!-- Debug: Active examples: " . count($active_examples) . " | Inactive examples: " . count($inactive_examples) . " -->\n";
+    
     $templatedata = array(
         'has_image' => true,
         'imageUrl' => $imageurl->out(),
@@ -219,11 +333,10 @@ if ($imagefile) {
         'imagemapid' => $imagemap->id,
         'sesskey' => sesskey(),
         'area_save_url' => new moodle_url('/mod/imagemap/area_save.php'),
+        'css_examples_modal' => $css_examples_modal,
         'has_areas' => !empty($areas),
         'areas' => $areasfortemplate,
-        'sections_with_modules' => $sections_with_modules,
-        'all_modules_flat' => json_encode($all_modules_flat),
-        'all_sections' => $all_sections,
+        'target_options' => $targetoptions,
         'active_examples' => $active_examples_template,
         'inactive_examples' => $inactive_examples_template,
         // Language strings
@@ -235,14 +348,8 @@ if ($imagefile) {
         'finish' => get_string('finish', 'moodle'),
         'addarea' => get_string('addarea', 'imagemap'),
         'title_label' => get_string('title', 'imagemap'),
-        'linktype_label' => get_string('linktype', 'imagemap'),
-        'linktype_module' => get_string('linktype_module', 'imagemap'),
-        'linktype_section' => get_string('linktype_section', 'imagemap'),
-        'linktype_url' => get_string('linktype_url', 'imagemap'),
-        'linktarget_label' => get_string('linktarget', 'imagemap'),
-        'linktarget_help' => get_string('linktarget_help', 'imagemap'),
-        'conditioncmid_label' => get_string('conditioncmid', 'imagemap'),
-        'nocondition' => get_string('nocondition', 'imagemap'),
+        'target_label' => get_string('target', 'imagemap'),
+        'target_help' => get_string('target_help', 'imagemap'),
         'activefilter_label' => get_string('activefilter', 'imagemap'),
         'activefilter_help' => get_string('activefilter_help', 'imagemap'),
         'inactivefilter_label' => get_string('inactivefilter', 'imagemap'),

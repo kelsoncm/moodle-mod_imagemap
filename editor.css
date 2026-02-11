@@ -163,3 +163,63 @@
     border-radius: 3px;
     transition: all 0.3s ease;
 }
+
+/* CSS Examples Modal Styles */
+#css-examples-modal .css-example-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    border: 1px solid #dee2e6;
+}
+
+#css-examples-modal .css-example-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#css-examples-modal .css-example-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+#css-examples-modal .css-example-card .card-body {
+    padding: 10px 12px;
+}
+
+#css-examples-modal .css-example-card .card-footer {
+    padding: 8px 12px;
+    border-top: 1px solid #dee2e6;
+}
+
+#css-examples-modal .css-preview-canvas {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    display: block;
+    margin: 0 auto;
+}
+
+#css-examples-modal .select-example-btn {
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+#css-examples-modal .nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+}
+
+#css-examples-modal .nav-tabs .nav-link {
+    color: #495057;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 8px 12px;
+}
+
+#css-examples-modal .nav-tabs .nav-link:hover {
+    border-bottom-color: #0073e6;
+    color: #0073e6;
+}
+
+#css-examples-modal .nav-tabs .nav-link.active {
+    color: #0073e6;
+    background-color: transparent;
+    border-bottom-color: #0073e6;
+}

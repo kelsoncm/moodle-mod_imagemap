@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_imagemap';
-$plugin->release = '1.1.0';
-$plugin->version = 2026021001; // Added toolbar, line tool, eraser tool
+$plugin->release = '1.2.0';
+$plugin->version = 2026021102; // Target selection and availability-based activation
 $plugin->requires = 2023041000; // Moodle 4.1 or later
 $plugin->maturity = MATURITY_ALPHA;

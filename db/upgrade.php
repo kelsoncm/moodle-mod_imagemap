@@ -145,5 +145,53 @@ function xmldb_imagemap_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026021001, 'imagemap');
     }
 
+    if ($oldversion < 2026021101) {
+        $table = new xmldb_table('imagemap_area');
+
+        $field = new xmldb_field('targettype', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'module', 'coords');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('targetid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'targettype');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Migrate existing data from linktype/linktarget.
+        if ($dbman->field_exists($table, new xmldb_field('linktype'))) {
+            $areas = $DB->get_records('imagemap_area', null, '', 'id, linktype, linktarget');
+            foreach ($areas as $area) {
+                if ($area->linktype === 'module' || $area->linktype === 'section') {
+                    $DB->set_field('imagemap_area', 'targettype', $area->linktype, array('id' => $area->id));
+                    $DB->set_field('imagemap_area', 'targetid', (int)$area->linktarget, array('id' => $area->id));
+                }
+            }
+        }
+
+        // Drop old fields and index.
+        $index = new xmldb_index('conditioncmid', XMLDB_INDEX_NOTUNIQUE, array('conditioncmid'));
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        $field = new xmldb_field('linktype');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        $field = new xmldb_field('linktarget');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        $field = new xmldb_field('conditioncmid');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026021101, 'imagemap');
+    }
+
     return true;
 }
