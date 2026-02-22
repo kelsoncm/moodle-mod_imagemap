@@ -64,6 +64,7 @@ $string['arearestricted'] = 'This item has access restrictions.';
 $string['clickarea'] = 'Click on an area';
 $string['areainactive'] = 'This area is inactive (complete {$a} first)';
 $string['noareas'] = 'No areas have been defined yet.';
+$string['coursepreviewrestricted'] = '{$a} area(s) with access restriction';
 
 // Error strings
 $string['error:invalidshape'] = 'Invalid shape type';

@@ -64,6 +64,7 @@ $string['arearestricted'] = 'Este item possui restrições de acesso.';
 $string['clickarea'] = 'Clique em uma área';
 $string['areainactive'] = 'Esta área está inativa (complete {$a} primeiro)';
 $string['noareas'] = 'Nenhuma área foi definida ainda.';
+$string['coursepreviewrestricted'] = '{$a} área(s) com restrição de acesso';
 
 // Admin strings
 $string['cssexamples'] = 'Exemplos de CSS';
