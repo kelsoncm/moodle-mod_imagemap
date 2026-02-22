@@ -73,6 +73,8 @@ var ImageMapEditor = {
                 return;
             }
 
+            drawAreaFilter(area, coords);
+
             // Eraser hover highlight
             var isEraserHover = (currentTool === 'eraser' && area._eraserHover);
 
@@ -115,6 +117,85 @@ var ImageMapEditor = {
                 ctx.stroke();
             }
 
+            ctx.restore();
+        }
+
+        function applyCssTextToStyle(style, cssText) {
+            if (!cssText || cssText === 'none') {
+                return;
+            }
+            if (cssText.indexOf(':') === -1 && cssText.indexOf('(') !== -1) {
+                style.filter = cssText;
+                return;
+            }
+            cssText.split(';').forEach(function(rule) {
+                if (!rule.trim()) {
+                    return;
+                }
+                var parts = rule.split(':');
+                if (parts.length >= 2) {
+                    var prop = parts.shift().trim();
+                    var value = parts.join(':').trim();
+                    style.setProperty(prop, value);
+                }
+            });
+        }
+
+        function getAreaFilterValue(area) {
+            var cssText = (area.active ? area.activefilter : area.inactivefilter) || '';
+            if (!cssText) {
+                cssText = area.active ? 'none' : 'grayscale(1) opacity(0.5)';
+            }
+
+            var tmp = document.createElement('div');
+            applyCssTextToStyle(tmp.style, cssText);
+            return tmp.style.filter || '';
+        }
+
+        function clipAreaPath(area, coords) {
+            if (area.shape === 'rect' && coords.length >= 4) {
+                var x1 = Math.min(coords[0], coords[2]);
+                var y1 = Math.min(coords[1], coords[3]);
+                var w = Math.abs(coords[2] - coords[0]);
+                var h = Math.abs(coords[3] - coords[1]);
+                ctx.beginPath();
+                ctx.rect(x1, y1, w, h);
+                return true;
+            }
+
+            if (area.shape === 'circle' && coords.length >= 3) {
+                ctx.beginPath();
+                ctx.arc(coords[0], coords[1], coords[2], 0, 2 * Math.PI);
+                return true;
+            }
+
+            if (area.shape === 'poly' && coords.length >= 6) {
+                ctx.beginPath();
+                ctx.moveTo(coords[0], coords[1]);
+                for (var i = 2; i < coords.length; i += 2) {
+                    ctx.lineTo(coords[i], coords[i + 1]);
+                }
+                ctx.closePath();
+                return true;
+            }
+
+            return false;
+        }
+
+        function drawAreaFilter(area, coords) {
+            var filterValue = getAreaFilterValue(area);
+            if (!filterValue || filterValue === 'none') {
+                return;
+            }
+
+            ctx.save();
+            if (!clipAreaPath(area, coords)) {
+                ctx.restore();
+                return;
+            }
+            ctx.clip();
+            ctx.filter = filterValue;
+            ctx.drawImage(img, 0, 0);
             ctx.restore();
         }
 

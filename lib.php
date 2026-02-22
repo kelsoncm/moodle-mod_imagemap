@@ -334,8 +334,9 @@ function imagemap_sanitize_coords_for_html_map($coords) {
  * @param cm_info $cm
  * @return void
  */
-function mod_imagemap_cm_info_view(cm_info $cm) {
-    global $DB;
+function imagemap_cm_info_view(cm_info $cm) {
+    global $DB, $PAGE;
+    static $summaryscriptadded = false;
 
     if (empty($cm->uservisible)) {
         return;
@@ -370,45 +371,63 @@ function mod_imagemap_cm_info_view(cm_info $cm) {
     $course = get_course($imagemap->course);
     $areas = imagemap_get_areas($imagemap->id);
 
-    $mapname = 'imagemap-cm-map-' . $cm->id;
-    $areashtml = '';
+    $summaryid = 'imagemap-cm-summary-' . $cm->id;
+    $areadata = array();
     $restrictedcount = 0;
 
     foreach ($areas as $area) {
-        $shape = imagemap_normalize_shape_for_html_map($area->shape);
         $coords = imagemap_sanitize_coords_for_html_map($area->coords);
-        if (!$shape || $coords === '') {
+        if ($coords === '') {
             continue;
         }
 
         $targetdata = imagemap_get_area_target_data($area, $course, $context);
-        if (!$targetdata['active'] || empty($targetdata['url'])) {
+        $isactive = (bool)$targetdata['active'];
+        if (!$isactive) {
             $restrictedcount++;
+        }
+
+        $shape = imagemap_normalize_shape_for_html_map($area->shape);
+        if (!$shape) {
             continue;
         }
 
-        $attrs = array(
+        $areadata[] = array(
+            'id' => (int)$area->id,
             'shape' => $shape,
             'coords' => $coords,
-            'href' => $targetdata['url']->out(),
-            'alt' => s($area->title),
-            'title' => s($area->title),
+            'title' => $area->title,
+            'url' => !empty($targetdata['url']) ? $targetdata['url']->out(false) : '',
+            'active' => $isactive,
+            'tooltip' => $targetdata['tooltip'],
+            'activefilter' => $area->activefilter ?: 'none',
+            'inactivefilter' => $area->inactivefilter ?: 'grayscale(1) opacity(0.5)'
         );
-        $areashtml .= html_writer::empty_tag('area', $attrs);
     }
+
+    $summarydata = array(
+        'id' => $summaryid,
+        'imageurl' => $imageurl->out(false),
+        'areas' => $areadata,
+    );
+    $encodedsummary = json_encode($summarydata);
 
     $imageattrs = array(
         'src' => $imageurl->out(false),
         'alt' => format_string($imagemap->name),
         'loading' => 'lazy',
-        'usemap' => '#' . $mapname,
-        'style' => 'max-width:100%;height:auto;display:block;border-radius:4px;'
+        'class' => 'mod-imagemap-summary-image',
+        'style' => 'width:100%;height:auto;display:block;border-radius:4px;'
     );
     $content = html_writer::start_div('mod-imagemap-course-summary', array(
-        'style' => 'margin-top:.5rem;max-width:720px;'
+        'id' => $summaryid,
+        'data-imagemap-summary' => $encodedsummary,
+        'style' => 'margin-top:.5rem;width:100%;position:relative;'
     ));
     $content .= html_writer::empty_tag('img', $imageattrs);
-    $content .= html_writer::tag('map', $areashtml, array('name' => $mapname));
+    $content .= html_writer::div('', 'mod-imagemap-summary-overlays', array(
+        'style' => 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;'
+    ));
 
     if ($restrictedcount > 0) {
         $content .= html_writer::div(
@@ -419,5 +438,13 @@ function mod_imagemap_cm_info_view(cm_info $cm) {
     }
 
     $content .= html_writer::end_div();
+
+    if (!$summaryscriptadded) {
+        $content .= html_writer::script("require(['mod_imagemap/summary'], function(summary) { if (summary && summary.init) { summary.init(); } });");
+        $summaryscriptadded = true;
+    }
+
     $cm->set_after_link($content);
+
+    $PAGE->requires->js_call_amd('mod_imagemap/summary', 'init');
 }

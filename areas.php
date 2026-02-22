@@ -90,6 +90,7 @@ if ($imagefile) {
     $areasbyid = array();
     foreach ($areas as $area) {
         $areasbyid[$area->id] = $area;
+        $targetdata = imagemap_get_area_target_data($area, $course, $context);
         $areasdata[] = array(
             'id' => (int)$area->id,
             'shape' => $area->shape,
@@ -97,6 +98,8 @@ if ($imagefile) {
             'title' => $area->title,
             'targettype' => $area->targettype,
             'targetid' => (int)$area->targetid,
+            'active' => (bool)$targetdata['active'],
+            'tooltip' => $targetdata['tooltip'],
             'activefilter' => $area->activefilter,
             'inactivefilter' => $area->inactivefilter
         );
