@@ -283,3 +283,141 @@ function imagemap_get_area_target_data($area, $course, $context) {
 
     return $data;
 }
+
+/**
+ * Normalize area shape to HTML imagemap compatible value.
+ *
+ * @param string $shape
+ * @return string|null
+ */
+function imagemap_normalize_shape_for_html_map($shape) {
+    if ($shape === 'rect' || $shape === 'rectangle') {
+        return 'rect';
+    }
+    if ($shape === 'circle') {
+        return 'circle';
+    }
+    if ($shape === 'poly' || $shape === 'polygon') {
+        return 'poly';
+    }
+    return null;
+}
+
+/**
+ * Sanitize coordinate list for HTML imagemap area.
+ *
+ * @param string $coords
+ * @return string
+ */
+function imagemap_sanitize_coords_for_html_map($coords) {
+    if ($coords === '') {
+        return '';
+    }
+
+    $parts = explode(',', $coords);
+    $clean = array();
+    foreach ($parts as $part) {
+        $value = trim($part);
+        if ($value === '' || !is_numeric($value)) {
+            continue;
+        }
+        $number = (float)$value;
+        $clean[] = (string)round($number);
+    }
+
+    return implode(',', $clean);
+}
+
+/**
+ * Inject image map preview in course section activity card.
+ *
+ * @param cm_info $cm
+ * @return void
+ */
+function mod_imagemap_cm_info_view(cm_info $cm) {
+    global $DB;
+
+    if (empty($cm->uservisible)) {
+        return;
+    }
+
+    $imagemap = $DB->get_record('imagemap', array('id' => $cm->instance), 'id, name, course', IGNORE_MISSING);
+    if (!$imagemap) {
+        return;
+    }
+
+    $context = context_module::instance($cm->id);
+    if (!has_capability('mod/imagemap:view', $context)) {
+        return;
+    }
+
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($context->id, 'mod_imagemap', 'image', 0, 'itemid, filepath, filename', false);
+    $imagefile = reset($files);
+    if (!$imagefile) {
+        return;
+    }
+
+    $imageurl = moodle_url::make_pluginfile_url(
+        $context->id,
+        'mod_imagemap',
+        'image',
+        $imagefile->get_itemid(),
+        $imagefile->get_filepath(),
+        $imagefile->get_filename()
+    );
+
+    $course = get_course($imagemap->course);
+    $areas = imagemap_get_areas($imagemap->id);
+
+    $mapname = 'imagemap-cm-map-' . $cm->id;
+    $areashtml = '';
+    $restrictedcount = 0;
+
+    foreach ($areas as $area) {
+        $shape = imagemap_normalize_shape_for_html_map($area->shape);
+        $coords = imagemap_sanitize_coords_for_html_map($area->coords);
+        if (!$shape || $coords === '') {
+            continue;
+        }
+
+        $targetdata = imagemap_get_area_target_data($area, $course, $context);
+        if (!$targetdata['active'] || empty($targetdata['url'])) {
+            $restrictedcount++;
+            continue;
+        }
+
+        $attrs = array(
+            'shape' => $shape,
+            'coords' => $coords,
+            'href' => $targetdata['url']->out(),
+            'alt' => s($area->title),
+            'title' => s($area->title),
+        );
+        $areashtml .= html_writer::empty_tag('area', $attrs);
+    }
+
+    $imageattrs = array(
+        'src' => $imageurl->out(false),
+        'alt' => format_string($imagemap->name),
+        'loading' => 'lazy',
+        'usemap' => '#' . $mapname,
+        'style' => 'max-width:100%;height:auto;display:block;border-radius:4px;'
+    );
+    $content = html_writer::start_div('mod-imagemap-course-summary', array(
+        'style' => 'margin-top:.5rem;max-width:720px;'
+    ));
+    $content .= html_writer::empty_tag('img', $imageattrs);
+    $content .= html_writer::tag('map', $areashtml, array('name' => $mapname));
+
+    if ($restrictedcount > 0) {
+        $content .= html_writer::div(
+            get_string('coursepreviewrestricted', 'imagemap', $restrictedcount),
+            'text-muted small',
+            array('style' => 'margin-top:.25rem;')
+        );
+    }
+
+    $content .= html_writer::end_div();
+    $cm->set_after_link($content);
+}
