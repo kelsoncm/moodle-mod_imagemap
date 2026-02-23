@@ -24,6 +24,7 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
+require_once($CFG->libdir . '/completionlib.php');
 
 $id = optional_param('id', 0, PARAM_INT); // Course module ID
 
@@ -40,10 +41,10 @@ require_login($course, true, $cm);
 $context = context_module::instance($cm->id);
 require_capability('mod/imagemap:view', $context);
 
-$event = \mod_imagemap\event\course_module_viewed::create(array(
-    'objectid' => $imagemap->id,
-    'context' => $context
-));
+$completion = new completion_info($course);
+$completion->set_module_viewed($cm);
+
+$event = \mod_imagemap\event\course_module_viewed::create(['objectid' => $imagemap->id, 'context' => $context]);
 $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('imagemap', $imagemap);
 $event->trigger();

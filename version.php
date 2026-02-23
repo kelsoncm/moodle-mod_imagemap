@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_imagemap';
 $plugin->release = '1.2.0';
-$plugin->version = 2026021102; // Target selection and availability-based activation
+$plugin->version = 2026022200; // Completion on view support
 $plugin->requires = 2023041000; // Moodle 4.1 or later
 $plugin->maturity = MATURITY_ALPHA;
