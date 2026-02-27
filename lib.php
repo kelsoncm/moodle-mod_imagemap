@@ -179,6 +179,40 @@ function imagemap_get_areas($imagemapid) {
 }
 
 /**
+ * Check if a course module is visible for a specific user using availability API.
+ *
+ * @param cm_info|stdClass $cminfo
+ * @param int $userid
+ * @param string|null $availabilityinfo
+ * @return bool
+ */
+function imagemap_coursemodule_visible_for_user($cminfo, $userid, &$availabilityinfo = null) {
+    $ci = new \core_availability\info_module($cminfo);
+    return $ci->is_user_visible($cminfo, $userid);
+}
+
+/**
+ * Check if a section is available for a specific user using availability API.
+ *
+ * @param section_info|stdClass $section
+ * @param int $userid
+ * @param string|null $availabilityinfo
+ * @return bool
+ */
+function imagemap_section_visible_for_user($section, $userid, &$availabilityinfo = null) {
+    $availabilityinfo = '';
+    $availablebyconditions = !empty($section->uservisible) && !empty($section->available);
+
+    if (class_exists('\\core_availability\\info_section')) {
+        $sci = new \core_availability\info_section($section);
+        $availablebyconditions = !empty($section->uservisible)
+            && $sci->is_available($availabilityinfo, true, $userid);
+    }
+
+    return !empty($section->uservisible) && !empty($section->available) && $availablebyconditions;
+}
+
+/**
  * Check if an area is active based on completion condition
  *
  * @param stdClass $area
@@ -195,7 +229,7 @@ function imagemap_is_area_active($area, $userid) {
         }
         $modinfo = get_fast_modinfo($cm->course, $userid);
         $cminfo = $modinfo->get_cm($cm->id);
-        return $cminfo->uservisible && $cminfo->available;
+        return imagemap_coursemodule_visible_for_user($cminfo, $userid);
     }
 
     if ($area->targettype === 'section') {
@@ -206,7 +240,10 @@ function imagemap_is_area_active($area, $userid) {
         }
         $modinfo = get_fast_modinfo($sectionrecord->course, $userid);
         $sectioninfo = $modinfo->get_section_info_by_id($sectionrecord->id, IGNORE_MISSING);
-        return $sectioninfo && $sectioninfo->uservisible && $sectioninfo->available;
+        if (!$sectioninfo) {
+            return false;
+        }
+        return imagemap_section_visible_for_user($sectioninfo, $userid);
     }
 
     return false;
@@ -250,6 +287,8 @@ function imagemap_get_area_url($area, $courseid) {
  * @return array{url:moodle_url|null,active:bool,tooltip:string}
  */
 function imagemap_get_area_target_data($area, $course, $context) {
+    global $USER;
+
     $data = array('url' => null, 'active' => false, 'tooltip' => '');
 
     if ($area->targettype === 'module') {
@@ -257,10 +296,13 @@ function imagemap_get_area_target_data($area, $course, $context) {
         if (!$cm) {
             return $data;
         }
+        $modinfo = get_fast_modinfo($course, (int)$USER->id);
+        $cminfo = $modinfo->get_cm($cm->id);
         $data['url'] = new moodle_url('/mod/' . $cm->modname . '/view.php', array('id' => $cm->id));
-        $data['active'] = $cm->available && $cm->uservisible;
+        $availabilityinfo = '';
+        $data['active'] = imagemap_coursemodule_visible_for_user($cminfo, (int)$USER->id, $availabilityinfo);
         if (!$data['active']) {
-            $info = $cm->availableinfo ?? '';
+            $info = $availabilityinfo !== '' ? $availabilityinfo : ($cminfo->availableinfo ?? '');
             $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, array('context' => $context))));
             $data['tooltip'] = $tooltip !== '' ? $tooltip : get_string('arearestricted', 'imagemap');
         }
@@ -268,15 +310,16 @@ function imagemap_get_area_target_data($area, $course, $context) {
     }
 
     if ($area->targettype === 'section') {
-        $modinfo = get_fast_modinfo($course);
+        $modinfo = get_fast_modinfo($course, (int)$USER->id);
         $section = $modinfo->get_section_info_by_id((int)$area->targetid, IGNORE_MISSING);
         if (!$section) {
             return $data;
         }
         $data['url'] = course_get_url($course, (object)$section, array('navigation' => true));
-        $data['active'] = $section->available && $section->uservisible;
+        $availabilityinfo = '';
+        $data['active'] = imagemap_section_visible_for_user($section, (int)$USER->id, $availabilityinfo);
         if (!$data['active']) {
-            $info = $section->availableinfo ?? '';
+            $info = $availabilityinfo !== '' ? $availabilityinfo : ($section->availableinfo ?? '');
             $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, array('context' => $context))));
             $data['tooltip'] = $tooltip !== '' ? $tooltip : get_string('arearestricted', 'imagemap');
         }
