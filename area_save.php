@@ -36,7 +36,7 @@ $title = required_param('title', PARAM_TEXT);
 $targettype = required_param('targettype', PARAM_ALPHA);
 $targetid = required_param('targetid', PARAM_INT);
 $activefilter = optional_param('activefilter', 'none', PARAM_RAW);
-$inactivefilter = optional_param('inactivefilter', 'grayscale(1) opacity(0.5)', PARAM_RAW);
+$inactivefilter = optional_param('inactivefilter', 'filter: grayscale(1);', PARAM_RAW);
 
 $cm = get_coursemodule_from_id('imagemap', $cmid, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);

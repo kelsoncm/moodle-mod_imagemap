@@ -381,12 +381,12 @@ define([], function () {
                     var cssValue = this.value.trim();
                     autoResizeTextarea(this);
                     if (typeof CSSPreview !== 'undefined') {
-                        CSSPreview.draw(inactiveFilterCanvas, cssValue || 'grayscale(1) opacity(0.5)');
+                        CSSPreview.draw(inactiveFilterCanvas, cssValue || 'filter: grayscale(100%);');
                     }
                 });
                 // Initial render and resize
                 if (typeof CSSPreview !== 'undefined') {
-                    CSSPreview.draw(inactiveFilterCanvas, inactiveFilterInput.value || 'grayscale(1) opacity(0.5)');
+                    CSSPreview.draw(inactiveFilterCanvas, inactiveFilterInput.value || 'filter: grayscale(100%);');
                 }
                 autoResizeTextarea(inactiveFilterInput);
             }
@@ -402,7 +402,7 @@ define([], function () {
                 document.getElementById('linktarget').value = area.linktarget;
                 document.getElementById('conditioncmid').value = area.conditioncmid || 0;
                 document.getElementById('activefilter').value = area.activefilter || 'none';
-                document.getElementById('inactivefilter').value = area.inactivefilter || 'grayscale(1) opacity(0.5)';
+                document.getElementById('inactivefilter').value = area.inactivefilter || 'filter: grayscale(100%);';
                 document.getElementById('area-form-title').textContent = (data.strings && data.strings.editarea) ? data.strings.editarea : 'Edit area';
                 openAreaForm();
                 // Trigger canvas preview updates after setting values
@@ -410,7 +410,7 @@ define([], function () {
                     var activeCanvas = document.getElementById('activefilter-preview-canvas');
                     var inactiveCanvas = document.getElementById('inactivefilter-preview-canvas');
                     if (activeCanvas) CSSPreview.draw(activeCanvas, area.activefilter || 'none');
-                    if (inactiveCanvas) CSSPreview.draw(inactiveCanvas, area.inactivefilter || 'grayscale(1) opacity(0.5)');
+                    if (inactiveCanvas) CSSPreview.draw(inactiveCanvas, area.inactivefilter || 'filter: grayscale(100%);');
                 }
             }
 

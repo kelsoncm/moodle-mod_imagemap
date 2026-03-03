@@ -199,8 +199,7 @@ function imagemap_is_area_active($area, $userid) {
     }
 
     if ($area->targettype === 'section') {
-        $sectionrecord = $DB->get_record('course_sections', array('id' => (int)$area->targetid),
-            'id, course', IGNORE_MISSING);
+        $sectionrecord = $DB->get_record('course_sections', array('id' => (int)$area->targetid), 'id, course', IGNORE_MISSING);
         if (!$sectionrecord) {
             return false;
         }
@@ -403,7 +402,7 @@ function imagemap_cm_info_view(cm_info $cm) {
             'active' => $isactive,
             'tooltip' => $targetdata['tooltip'],
             'activefilter' => $area->activefilter ?: 'none',
-            'inactivefilter' => $area->inactivefilter ?: 'grayscale(1) opacity(0.5)'
+            'inactivefilter' => $area->inactivefilter ?: 'filter: grayscale(100%);'
         );
     }
 

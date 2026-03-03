@@ -186,7 +186,7 @@ define([], function () {
                     overlay.dataset.areaIndex = index;
 
                     // Apply custom CSS
-                    var cssText = area.active ? (area.activefilter || '') : (area.inactivefilter || 'filter: grayscale(1) opacity(0.5);');
+                    var cssText = area.active ? (area.activefilter || '') : (area.inactivefilter || 'filter: grayscale(100%);');
                     if (cssText && cssText !== 'none') {
                         // Check if it's a filter or full CSS
                         if (cssText.indexOf(':') === -1 && cssText.indexOf('(') !== -1) {

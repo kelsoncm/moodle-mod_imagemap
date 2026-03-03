@@ -106,7 +106,7 @@ if ($imagefile) {
             'active' => $isactive,
             'tooltip' => $targetdata['tooltip'],
             'activefilter' => $area->activefilter ?: 'none',
-            'inactivefilter' => $area->inactivefilter ?: 'grayscale(1) opacity(0.5)'
+            'inactivefilter' => $area->inactivefilter ?: 'filter: grayscale(100%);'
         );
     }
 

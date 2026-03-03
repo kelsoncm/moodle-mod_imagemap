@@ -95,7 +95,7 @@ function xmldb_imagemap_upgrade($oldversion) {
                 
                 // Inactive examples
                 array('type' => 'inactive', 'name' => 'Sem Efeito', 'css_text' => 'none', 'sortorder' => 0),
-                array('type' => 'inactive', 'name' => 'Grayed Out', 'css_text' => 'filter: grayscale(1) opacity(0.5);', 'sortorder' => 1),
+                array('type' => 'inactive', 'name' => 'Grayed Out', 'css_text' => 'filter: grayscale(100%);', 'sortorder' => 1),
                 array('type' => 'inactive', 'name' => 'Dark Overlay', 'css_text' => 'background: rgba(0,0,0,0.6);', 'sortorder' => 2),
                 array('type' => 'inactive', 'name' => 'Blurred', 'css_text' => 'filter: blur(3px);', 'sortorder' => 3),
                 array('type' => 'inactive', 'name' => 'Desaturated', 'css_text' => 'filter: brightness(0.4) grayscale(0.5);', 'sortorder' => 4),

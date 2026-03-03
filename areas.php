@@ -153,8 +153,8 @@ if ($imagefile) {
     if (empty($inactive_examples)) {
         $test_examples = array(
             array('type' => 'inactive', 'name' => 'No Effect', 'css_text' => 'none', 'sortorder' => 0),
-            array('type' => 'inactive', 'name' => 'Grayed Out', 'css_text' => 'filter: grayscale(1) opacity(0.5)', 'sortorder' => 1),
-            array('type' => 'inactive', 'name' => 'Blurred', 'css_text' => 'filter: blur(3px)', 'sortorder' => 2),
+            array('type' => 'inactive', 'name' => 'Grayed Out', 'css_text' => 'filter: grayscale(100%);', 'sortorder' => 1),
+            array('type' => 'inactive', 'name' => 'Blurred', 'css_text' => 'filter: blur(3px);', 'sortorder' => 2),
         );
         
         foreach ($test_examples as $example) {
