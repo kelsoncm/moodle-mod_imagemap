@@ -167,13 +167,20 @@ mod_imagemap
    │
    ├─ Processa imagemap_area (para cada área)
    │  ├─ Insere novo registro
-   │  ├─ Se targettype='module': mapeia targetid
+   │  ├─ Se targettype='module': mapeia targetid (course_module)
+   │  ├─ Se targettype='section': mapeia targetid (course_section)
+   │  ├─ Se targettype='url': mantém targetid literal (URL não muda)
    │  └─ Mapeia: id_antigo → id_novo
    │
-   └─ Processa imagemap_line (para cada linha)
-      ├─ Mapeia from_areaid
-      ├─ Mapeia to_areaid
-      └─ Insere novo registro (se áreas mapeadas com sucesso)
+   ├─ Processa imagemap_line (para cada linha)
+   │  ├─ Mapeia from_areaid
+   │  ├─ Mapeia to_areaid
+   │  └─ Insere novo registro (se áreas mapeadas com sucesso)
+   │
+   └─ Processa imagemap_css_example (exemplos CSS globais)
+      ├─ Verifica se já existe (por type + name)
+      ├─ Insere se novo para evitar duplicação
+      └─ Disponibiliza para uso em outros cursos
    ↓
 6. Executa after_execute()
    ├─ Restaura arquivos de imagem
@@ -212,11 +219,16 @@ mod_imagemap
 | `shape` | ✅ | circle, rect, poly |
 | `coords` | ✅ | JSON com coordenadas |
 | `targettype` | ✅ | module, section, url |
-| `targetid` | ✅ | ID do alvo (remapeado se module) |
+| `targetid` | ✅ | ID do alvo (remapeado conforme tipo) |
 | `title` | ✅ | Título da área |
 | `activefilter` | ✅ | CSS para ativo |
 | `inactivefilter` | ✅ | CSS para inativo |
 | `sortorder` | ✅ | Ordem de exibição |
+
+**Notas sobre remapeamento de targetid:**
+- `module` - Remapeado de course_module ID para novo curso ✅
+- `section` - Remapeado de course_section ID para novo curso ✅
+- `url` - Mantido literal (é um URL externo) ✅
 
 ### Tabela: imagemap_line
 
@@ -227,6 +239,25 @@ mod_imagemap
 | `from_areaid` | ✅ | FK área origem (remapeada) |
 | `to_areaid` | ✅ | FK área destino (remapeada) |
 | `timecreated` | ✅ | Timestamp |
+
+### Tabela: imagemap_css_examples
+
+✅ **Novo em v1.2.1**: Exemplos de CSS para filtros são incluídos no backup/restore
+
+| Campo | Backup | Descrição |
+|-------|--------|-----------|
+| `id` | ✅ | ID (não precisa remapeamento) |
+| `type` | ✅ | 'active' ou 'inactive' |
+| `name` | ✅ | Nome do exemplo (ex: "Grayscale") |
+| `css_text` | ✅ | Código CSS do filtro |
+| `sortorder` | ✅ | Ordem de exibição |
+| `timecreated` | ✅ | Timestamp |
+| `timemodified` | ✅ | Timestamp |
+
+**Notas sobre CSS examples:**
+- Exemplos duplicados são evitados (verifica por type + name)
+- Disponibilizado globalmente em todo sistema
+- Não vinculado especificamente a cada atividade (compartilhado)
 
 ### Arquivos: Imagens
 
@@ -262,7 +293,9 @@ Usa: get_mappingid('tipo', id_antigo) → id_novo
 | `imagemap` | ID da atividade | `set_mapping('imagemap', old, new)` |
 | `imagemap_area` | ID de cada área | `set_mapping('imagemap_area', old, new)` |
 | `imagemap_line` | ID de cada linha | `set_mapping('imagemap_line', old, new)` |
-| `course_module` | Módulos referenciados | `get_mappingid('course_module', old)` |
+| `imagemap_css_example` | ID de exemplos CSS | `set_mapping('imagemap_css_example', old, new)` |
+| `course_module` | Módulos referenciados (targettype='module') | `get_mappingid('course_module', old)` |
+| `course_section` | Seções referenciadas (targettype='section') | `get_mappingid('course_section', old)` |
 
 ### Exemplo Prático
 
