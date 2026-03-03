@@ -66,7 +66,7 @@ Right-click area → Edit
 ```
 Right-click area → Edit
 → "CSS when active": filter: brightness(1.2);
-→ "CSS when inactive": filter: grayscale(1) opacity(0.5);
+→ "CSS when inactive": filter: grayscale(100%);
 ```
 
 ### Link to External Website
@@ -103,7 +103,7 @@ box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
 
 ### Gray Out (Inactive)
 ```css
-filter: grayscale(1) opacity(0.5);
+filter: grayscale(100%);
 ```
 
 ### Blue Border

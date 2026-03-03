@@ -144,11 +144,11 @@ CREATE TABLE imagemap_area_backup AS SELECT * FROM mdl_imagemap_area;
 -- Update schema
 ALTER TABLE mdl_imagemap 
   MODIFY activefilter TEXT DEFAULT 'none',
-  MODIFY inactivefilter TEXT DEFAULT 'grayscale(1) opacity(0.5)';
+  MODIFY inactivefilter TEXT DEFAULT 'filter: grayscale(100%)';
 
 ALTER TABLE mdl_imagemap_area
   MODIFY activefilter TEXT DEFAULT 'none',
-  MODIFY inactivefilter TEXT DEFAULT 'grayscale(1) opacity(0.5)';
+  MODIFY inactivefilter TEXT DEFAULT 'filter: grayscale(100%)';
 ```
 
 ### Rollback (if needed)

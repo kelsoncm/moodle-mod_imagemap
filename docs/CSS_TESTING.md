@@ -11,7 +11,7 @@ filter: brightness(1.2);
 ```
 
 ```css
-filter: grayscale(1) opacity(0.5);
+filter: grayscale(100%);
 ```
 
 ```css

@@ -91,7 +91,7 @@
    - In Image Map, add a new area
    - Set completion condition to the Page module
    - Set active filter: "none"
-   - Set inactive filter: "grayscale(1) opacity(0.5)"
+   - Set inactive filter: "grayscale(100%)"
    - Save
    ```
 

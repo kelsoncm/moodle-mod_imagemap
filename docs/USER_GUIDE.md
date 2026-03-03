@@ -290,7 +290,7 @@ Click **Edit areas** → right-click area → **CSS when inactive**
 
 ```css
 /* Default: grayscale + opacity */
-filter: grayscale(1) opacity(0.5);
+filter: grayscale(100%);
 ```
 
 ```css
@@ -361,7 +361,7 @@ filter: blur(3px) opacity(0.4);
 **Styling:**
 ```
 Active: filter: brightness(1.1);
-Inactive: filter: grayscale(1) opacity(0.5);
+Inactive: filter: grayscale(100%);
 ```
 
 ### Example 2: Interactive Learning Diagram
@@ -402,7 +402,7 @@ Active:
   box-shadow: 0 0 15px rgba(255, 215, 0, 0.7);
 
 Inactive:
-  filter: grayscale(1);
+  filter: grayscale(100%);
   opacity: 0.3;
 ```
 
@@ -461,7 +461,7 @@ Inactive:
 2. If you want areas always visible, set **Condition: none**
 3. Adjust CSS for inactive to make visible but different:
    ```css
-   filter: grayscale(1) opacity(0.5);
+   filter: grayscale(100%);
    ```
 
 ### Editor Loading Slowly

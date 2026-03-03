@@ -89,8 +89,8 @@ Each area supports:
 - Integration with Moodle Completion API
 - Areas check completion status of linked modules
 - Visual filters applied based on state:
-  - Active: Configurable (default: none)
-  - Inactive: Configurable (default: grayscale(1) opacity(0.5))
+  - Active: Configurable (default: `none`)
+  - Inactive: Configurable (default: `filter: grayscale(100%)`)
 - Non-clickable when inactive
 
 #### 5. Security Features
