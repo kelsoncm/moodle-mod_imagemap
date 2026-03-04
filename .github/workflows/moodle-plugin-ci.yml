@@ -120,6 +120,14 @@ jobs:
         env:
           DB: ${{ matrix.database }}
           MOODLE_BRANCH: ${{ matrix.moodle-branch }}
+          COMPOSER_PROCESS_TIMEOUT: 0
+          COMPOSER_NO_INTERACTION: 1
+          COMPOSER_NO_AUDIT: 1
+          npm_config_fetch_timeout: 120000
+          npm_config_fetch_retry: 5
+          npm_config_fetch_retry_mintimeout: 20000
+          npm_config_fetch_retry_maxtimeout: 120000
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: PHP Lint
         run: moodle-plugin-ci phplint
