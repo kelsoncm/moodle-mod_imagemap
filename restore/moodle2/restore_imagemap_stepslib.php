@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Structure step to restore one imagemap activity
  *
@@ -32,13 +30,12 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_imagemap_activity_structure_step extends restore_activity_structure_step {
-
     /**
      * Define the structure of the restore
      */
     protected function define_structure() {
 
-        $paths = array();
+        $paths = [];
 
         // Learn the imagemap element.
         $imagemap = new restore_path_element('imagemap', '/imagemap');
@@ -68,7 +65,7 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
         $data = (object)$data;
         $data->course = $this->get_courseid();
 
-        // Insert the imagemap record.
+        // Insert the imagemap record..
         $newitemid = $DB->insert_record('imagemap', $data);
 
         // Immediately after inserting "activity" record, call this.
@@ -86,15 +83,15 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
         $data = (object)$data;
         $data->imagemapid = $this->get_new_parentid('imagemap');
 
-        // Handle different target types - only module links need ID remapping
+        // Handle different target types - only module links need ID remapping.
         if ($data->targettype == 'module') {
-            // Module links need remapping to the new course context
+            // Module links need remapping to the new course context.
             $data->targetid = $this->get_mappingid('course_module', $data->targetid);
         } else if ($data->targettype == 'section') {
-            // Section links also need remapping to the new course context
+            // Section links also need remapping to the new course context.
             $data->targetid = $this->get_mappingid('course_section', $data->targetid);
         }
-        // For 'url' type, targetid is a literal URL so no remapping needed
+        // For 'url' type, targetid is a literal URL so no remapping needed.
 
         $newitemid = $DB->insert_record('imagemap_area', $data);
         $this->set_mapping('imagemap_area', $data->id, $newitemid);
@@ -111,7 +108,7 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
         $data = (object)$data;
         $data->imagemapid = $this->get_new_parentid('imagemap');
 
-        // Map the area IDs.
+        // Map the area IDs..
         $data->from_areaid = $this->get_mappingid('imagemap_area', $data->from_areaid);
         $data->to_areaid = $this->get_mappingid('imagemap_area', $data->to_areaid);
 
@@ -133,14 +130,14 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
         $data = (object)$data;
 
         // CSS examples are global, but we restore them to ensure availability
-        // Check if this example already exists to avoid duplicates
-        $existing = $DB->get_record('imagemap_css_examples', array(
+        // Check if this example already exists to avoid duplicates.
+        $existing = $DB->get_record('imagemap_css_examples', [
             'type' => $data->type,
-            'name' => $data->name
-        ));
+            'name' => $data->name,
+        ]);
 
         if (!$existing) {
-            // If it doesn't exist, insert it
+            // If it doesn't exist, insert it.
             $newitemid = $DB->insert_record('imagemap_css_examples', $data);
             $this->set_mapping('imagemap_css_example', $data->id, $newitemid);
         }
@@ -151,7 +148,7 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
      * to the activity to be executed by the link decoder
      */
     protected function define_decode_rules() {
-        $rules = array();
+        $rules = [];
 
         return $rules;
     }

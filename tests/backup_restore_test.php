@@ -43,13 +43,12 @@ require_once($CFG->libdir . '/phpunit/classes/restore_date_testcase.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_restore_test extends \restore_date_testcase {
-
     /**
      * Test setup
      */
     public function setUp(): void {
         parent::setUp();
-        // Reset after each test
+        // Reset after each test.
         $this->resetAfterTest(true);
     }
 
@@ -73,19 +72,19 @@ class backup_restore_test extends \restore_date_testcase {
     public function test_imagemap_backup() {
         global $DB;
 
-        // Create test course
+        // Create test course.
         $course = $this->getDataGenerator()->create_course();
 
-        // Create imagemap instance
+        // Create imagemap instance.
         $imagemap = $this->getDataGenerator()->create_module('imagemap', [
             'course' => $course->id,
             'name' => 'Test Imagemap',
             'intro' => 'Test Introduction',
             'width' => 800,
-            'height' => 600
+            'height' => 600,
         ]);
 
-        // Create backup
+        // Create backup.
         $bc = new \backup_controller(
             backup::TYPE_1COURSE,
             $course->id,
@@ -95,7 +94,7 @@ class backup_restore_test extends \restore_date_testcase {
             $this->userid
         );
 
-        // This should not throw an exception
+        // This should not throw an exception.
         $this->assertTrue($bc->execute_plan());
         $results = $bc->get_results();
         $this->assertNotEmpty($results['backup_destination']);
@@ -107,7 +106,7 @@ class backup_restore_test extends \restore_date_testcase {
     public function test_imagemap_restore_with_areas() {
         global $DB;
 
-        // Create source course with imagemap
+        // Create source course with imagemap.
         $sourcecourse = $this->getDataGenerator()->create_course();
 
         $imagemap = $this->getDataGenerator()->create_module('imagemap', [
@@ -115,10 +114,10 @@ class backup_restore_test extends \restore_date_testcase {
             'name' => 'Test Imagemap with Areas',
             'intro' => 'Test with areas',
             'width' => 800,
-            'height' => 600
+            'height' => 600,
         ]);
 
-        // Create an area
+        // Create an area.
         $area = (object)[
             'imagemapid' => $imagemap->id,
             'shape' => 'circle',
@@ -128,11 +127,11 @@ class backup_restore_test extends \restore_date_testcase {
             'title' => 'Test Area',
             'activefilter' => 'none',
             'inactivefilter' => 'grayscale(100%)',
-            'sortorder' => 0
+            'sortorder' => 0,
         ];
         $DB->insert_record('imagemap_area', $area);
 
-        // Backup the course
+        // Backup the course.
         $bc = new \backup_controller(
             backup::TYPE_1COURSE,
             $sourcecourse->id,
@@ -145,10 +144,10 @@ class backup_restore_test extends \restore_date_testcase {
         $results = $bc->get_results();
         $backupfile = $results['backup_destination'];
 
-        // Create target course
+        // Create target course.
         $targetcourse = $this->getDataGenerator()->create_course();
 
-        // Restore to target course
+        // Restore to target course.
         $rc = new \restore_controller(
             $backupfile,
             $targetcourse->id,
@@ -160,23 +159,23 @@ class backup_restore_test extends \restore_date_testcase {
 
         $this->assertTrue($rc->execute_plan());
 
-        // Verify restored content
-        $restored_imagemap = $DB->get_record('imagemap', [
+        // Verify restored content.
+        $restoredimagemap = $DB->get_record('imagemap', [
             'course' => $targetcourse->id,
-            'name' => 'Test Imagemap with Areas'
+            'name' => 'Test Imagemap with Areas',
         ]);
-        $this->assertNotNull($restored_imagemap);
+        $this->assertNotNull($restoredimagemap);
 
-        // Verify restored area
-        $restored_areas = $DB->get_records('imagemap_area', [
-            'imagemapid' => $restored_imagemap->id
+        // Verify restored area.
+        $restoredareas = $DB->get_records('imagemap_area', [
+            'imagemapid' => $restoredimagemap->id,
         ]);
-        $this->assertCount(1, $restored_areas);
+        $this->assertCount(1, $restoredareas);
 
-        $restored_area = reset($restored_areas);
-        $this->assertEquals('circle', $restored_area->shape);
-        $this->assertEquals('Test Area', $restored_area->title);
-        $this->assertEquals('https://example.com', $restored_area->targetid);
+        $restoredarea = reset($restoredareas);
+        $this->assertEquals('circle', $restoredarea->shape);
+        $this->assertEquals('Test Area', $restoredarea->title);
+        $this->assertEquals('https://example.com', $restoredarea->targetid);
     }
 
     /**
@@ -185,38 +184,38 @@ class backup_restore_test extends \restore_date_testcase {
     public function test_imagemap_restore_module_link_mapping() {
         global $DB;
 
-        // Create source course with activities
+        // Create source course with activities.
         $sourcecourse = $this->getDataGenerator()->create_course();
 
-        // Create a target module (e.g., Forum)
+        // Create a target module (e.g., Forum).
         $forum = $this->getDataGenerator()->create_module('forum', [
-            'course' => $sourcecourse->id
+            'course' => $sourcecourse->id,
         ]);
 
-        // Create imagemap with link to forum
+        // Create imagemap with link to forum.
         $imagemap = $this->getDataGenerator()->create_module('imagemap', [
             'course' => $sourcecourse->id,
             'name' => 'Test Imagemap Module Links',
             'intro' => 'Test',
             'width' => 800,
-            'height' => 600
+            'height' => 600,
         ]);
 
-        // Create area linking to module
+        // Create area linking to module.
         $area = (object)[
             'imagemapid' => $imagemap->id,
             'shape' => 'rect',
             'coords' => json_encode(['x1' => 10, 'y1' => 10, 'x2' => 100, 'y2' => 100]),
             'targettype' => 'module',
-            'targetid' => $forum->cmid,  // Link to course module
+            'targetid' => $forum->cmid, // Link to course module.
             'title' => 'Forum Link',
             'activefilter' => 'none',
             'inactivefilter' => 'grayscale(100%)',
-            'sortorder' => 0
+            'sortorder' => 0,
         ];
         $DB->insert_record('imagemap_area', $area);
 
-        // Backup
+        // Backup.
         $bc = new \backup_controller(
             backup::TYPE_1COURSE,
             $sourcecourse->id,
@@ -228,15 +227,15 @@ class backup_restore_test extends \restore_date_testcase {
         $bc->execute_plan();
         $results = $bc->get_results();
 
-        // Create target course
+        // Create target course.
         $targetcourse = $this->getDataGenerator()->create_course();
 
-        // Create matching module in target course
+        // Create matching module in target course.
         $targetforum = $this->getDataGenerator()->create_module('forum', [
-            'course' => $targetcourse->id
+            'course' => $targetcourse->id,
         ]);
 
-        // Restore
+        // Restore.
         $rc = new \restore_controller(
             $results['backup_destination'],
             $targetcourse->id,
@@ -247,21 +246,21 @@ class backup_restore_test extends \restore_date_testcase {
         );
         $rc->execute_plan();
 
-        // Verify area exists and module link is remapped (not null)
-        $restored_imagemap = $DB->get_record('imagemap', [
+        // Verify area exists and module link is remapped (not null).
+        $restoredimagemap = $DB->get_record('imagemap', [
             'course' => $targetcourse->id,
-            'name' => 'Test Imagemap Module Links'
+            'name' => 'Test Imagemap Module Links',
         ]);
 
-        $restored_areas = $DB->get_records('imagemap_area', [
-            'imagemapid' => $restored_imagemap->id
+        $restoredareas = $DB->get_records('imagemap_area', [
+            'imagemapid' => $restoredimagemap->id,
         ]);
 
-        $this->assertCount(1, $restored_areas);
-        $restored_area = reset($restored_areas);
-        // The module ID should be remapped (not the old $forum->cmid)
-        $this->assertNotNull($restored_area->targetid);
-        $this->assertNotEquals($forum->cmid, $restored_area->targetid);
+        $this->assertCount(1, $restoredareas);
+        $restoredarea = reset($restoredareas);
+        // The module ID should be remapped (not the old $forum->cmid).
+        $this->assertNotNull($restoredarea->targetid);
+        $this->assertNotEquals($forum->cmid, $restoredarea->targetid);
     }
 
     /**
@@ -270,19 +269,19 @@ class backup_restore_test extends \restore_date_testcase {
     public function test_imagemap_restore_with_lines() {
         global $DB;
 
-        // Create source course
+        // Create source course.
         $sourcecourse = $this->getDataGenerator()->create_course();
 
-        // Create imagemap
+        // Create imagemap.
         $imagemap = $this->getDataGenerator()->create_module('imagemap', [
             'course' => $sourcecourse->id,
             'name' => 'Test Imagemap with Lines',
             'intro' => 'Test',
             'width' => 800,
-            'height' => 600
+            'height' => 600,
         ]);
 
-        // Create two areas
+        // Create two areas.
         $area1 = (object)[
             'imagemapid' => $imagemap->id,
             'shape' => 'circle',
@@ -292,7 +291,7 @@ class backup_restore_test extends \restore_date_testcase {
             'title' => 'Area 1',
             'activefilter' => 'none',
             'inactivefilter' => 'grayscale(100%)',
-            'sortorder' => 0
+            'sortorder' => 0,
         ];
         $area1id = $DB->insert_record('imagemap_area', $area1);
 
@@ -305,20 +304,20 @@ class backup_restore_test extends \restore_date_testcase {
             'title' => 'Area 2',
             'activefilter' => 'none',
             'inactivefilter' => 'grayscale(100%)',
-            'sortorder' => 1
+            'sortorder' => 1,
         ];
         $area2id = $DB->insert_record('imagemap_area', $area2);
 
-        // Create line connecting areas
+        // Create line connecting areas.
         $line = (object)[
             'imagemapid' => $imagemap->id,
             'from_areaid' => $area1id,
             'to_areaid' => $area2id,
-            'timecreated' => time()
+            'timecreated' => time(),
         ];
         $DB->insert_record('imagemap_line', $line);
 
-        // Backup
+        // Backup.
         $bc = new \backup_controller(
             backup::TYPE_1COURSE,
             $sourcecourse->id,
@@ -330,10 +329,10 @@ class backup_restore_test extends \restore_date_testcase {
         $bc->execute_plan();
         $results = $bc->get_results();
 
-        // Create target course
+        // Create target course.
         $targetcourse = $this->getDataGenerator()->create_course();
 
-        // Restore
+        // Restore.
         $rc = new \restore_controller(
             $results['backup_destination'],
             $targetcourse->id,
@@ -344,15 +343,15 @@ class backup_restore_test extends \restore_date_testcase {
         );
         $rc->execute_plan();
 
-        // Verify
-        $restored_imagemap = $DB->get_record('imagemap', [
-            'course' => $targetcourse->id
+        // Verify.
+        $restoredimagemap = $DB->get_record('imagemap', [
+            'course' => $targetcourse->id,
         ]);
 
-        $restored_lines = $DB->get_records('imagemap_line', [
-            'imagemapid' => $restored_imagemap->id
+        $restoredlines = $DB->get_records('imagemap_line', [
+            'imagemapid' => $restoredimagemap->id,
         ]);
 
-        $this->assertCount(1, $restored_lines);
+        $this->assertCount(1, $restoredlines);
     }
 }

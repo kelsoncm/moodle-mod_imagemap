@@ -39,21 +39,21 @@ $activefilter = optional_param('activefilter', 'none', PARAM_RAW);
 $inactivefilter = optional_param('inactivefilter', 'filter: grayscale(1);', PARAM_RAW);
 
 $cm = get_coursemodule_from_id('imagemap', $cmid, 0, false, MUST_EXIST);
-$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-$imagemap = $DB->get_record('imagemap', array('id' => $imagemapid), '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+$imagemap = $DB->get_record('imagemap', ['id' => $imagemapid], '*', MUST_EXIST);
 
 require_login($course, true, $cm);
 
 $context = context_module::instance($cm->id);
 require_capability('mod/imagemap:manage', $context);
 
-// Validate shape
-if (!in_array($shape, array('circle', 'rect', 'poly'))) {
+// Validate shape.
+if (!in_array($shape, ['circle', 'rect', 'poly'])) {
     print_error('error:invalidshape', 'imagemap');
 }
 
-// Validate target type
-if (!in_array($targettype, array('module', 'section'))) {
+// Validate target type.
+if (!in_array($targettype, ['module', 'section'])) {
     print_error('error:invalidtargettype', 'imagemap');
 }
 
@@ -81,19 +81,23 @@ if ($targettype === 'module') {
 }
 
 if ($areaid) {
-    $existing = $DB->get_record('imagemap_area', array('id' => $areaid, 'imagemapid' => $imagemapid), '*', MUST_EXIST);
+    $existing = $DB->get_record('imagemap_area', ['id' => $areaid, 'imagemapid' => $imagemapid], '*', MUST_EXIST);
     $area->id = $areaid;
     $area->sortorder = $existing->sortorder;
     $DB->update_record('imagemap_area', $area);
 } else {
-    // Get next sort order
+    // Get next sort order.
     $maxsortorder = $DB->get_field_sql(
         'SELECT COALESCE(MAX(sortorder), -1) FROM {imagemap_area} WHERE imagemapid = ?',
-        array($imagemapid)
+        [$imagemapid]
     );
     $area->sortorder = $maxsortorder + 1;
     $DB->insert_record('imagemap_area', $area);
 }
 
-redirect(new moodle_url('/mod/imagemap/areas.php', array('id' => $cmid)),
-         get_string('changessaved'), null, \core\output\notification::NOTIFY_SUCCESS);
+redirect(
+    new moodle_url('/mod/imagemap/areas.php', ['id' => $cmid]),
+    get_string('changessaved'),
+    null,
+    \core\output\notification::NOTIFY_SUCCESS
+);

@@ -14,15 +14,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Settings for mod_imagemap
+ *
+ * @package    mod_imagemap
+ * @copyright  2026 Kelson C. M.
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    $settings->add(new admin_setting_heading('imagemap_settings', '', 
-        get_string('pluginadministration', 'imagemap')));
-    
-    // Link to CSS examples admin
-    $settings->add(new admin_setting_description('imagemap_cssexamples', 
-        get_string('cssexamples', 'imagemap'), 
-        html_writer::link(new moodle_url('/mod/imagemap/admin.php'), 
-        get_string('managecssexamples', 'imagemap'))));
+    $settings->add(new admin_setting_heading(
+        'imagemap_settings',
+        '',
+        get_string('pluginadministration', 'imagemap')
+    ));
+
+    // Link to CSS examples admin.
+    $settings->add(new admin_setting_description(
+        'imagemap_cssexamples',
+        get_string('cssexamples', 'imagemap'),
+        html_writer::link(
+            new moodle_url('/mod/imagemap/admin.php'),
+            get_string('managecssexamples', 'imagemap')
+        )
+    ));
 }

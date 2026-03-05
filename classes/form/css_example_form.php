@@ -28,47 +28,50 @@ require_once($CFG->libdir . '/formslib.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class css_example_form extends \moodleform {
-    
     /**
      * Form definition
      */
     public function definition() {
         $mform = $this->_form;
-        
+
         $example = $this->_customdata['example'] ?? null;
-        
+
         $mform->addElement('hidden', 'id', $example->id ?? 0);
         $mform->setType('id', PARAM_INT);
-        
-        $types = array(
+
+        $types = [
             'active' => get_string('activefilter', 'imagemap'),
-            'inactive' => get_string('inactivefilter', 'imagemap')
-        );
+            'inactive' => get_string('inactivefilter', 'imagemap'),
+        ];
         $mform->addElement('select', 'type', get_string('type', 'imagemap'), $types);
         $mform->setType('type', PARAM_ALPHA);
         if ($example) {
             $mform->setDefault('type', $example->type);
         }
-        
-        $mform->addElement('text', 'name', get_string('name'), array('size' => 50));
+
+        $mform->addElement('text', 'name', get_string('name'), ['size' => 50]);
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', get_string('required'), 'required', null, 'client');
         if ($example) {
             $mform->setDefault('name', $example->name);
         }
-        
-        $mform->addElement('textarea', 'css_text', get_string('css_text', 'imagemap'), 
-                          array('rows' => 5, 'cols' => 80, 'class' => 'css-input'));
+
+        $mform->addElement(
+            'textarea',
+            'css_text',
+            get_string('css_text', 'imagemap'),
+            ['rows' => 5, 'cols' => 80, 'class' => 'css-input']
+        );
         $mform->setType('css_text', PARAM_TEXT);
         $mform->addRule('css_text', get_string('required'), 'required', null, 'client');
         if ($example) {
             $mform->setDefault('css_text', $example->css_text);
         }
-        
-        $mform->addElement('text', 'sortorder', get_string('sortorder', 'imagemap'), array('size' => 5));
+
+        $mform->addElement('text', 'sortorder', get_string('sortorder', 'imagemap'), ['size' => 5]);
         $mform->setType('sortorder', PARAM_INT);
         $mform->setDefault('sortorder', $example->sortorder ?? 0);
-        
+
         $this->add_action_buttons(true, get_string('savechanges'));
     }
 }

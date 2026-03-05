@@ -25,21 +25,21 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
-$id = required_param('id', PARAM_INT); // Course ID
+$id = required_param('id', PARAM_INT); // Course ID.
 
-$course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $id], '*', MUST_EXIST);
 
 require_login($course);
 
 $context = context_course::instance($course->id);
 
-$event = \mod_imagemap\event\course_module_instance_list_viewed::create(array(
-    'context' => $context
-));
+$event = \mod_imagemap\event\course_module_instance_list_viewed::create([
+    'context' => $context,
+]);
 $event->add_record_snapshot('course', $course);
 $event->trigger();
 
-$PAGE->set_url('/mod/imagemap/index.php', array('id' => $id));
+$PAGE->set_url('/mod/imagemap/index.php', ['id' => $id]);
 $PAGE->set_title(format_string($course->fullname));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
@@ -50,27 +50,29 @@ echo $OUTPUT->heading(get_string('modulenameplural', 'imagemap'));
 $imagemaps = get_all_instances_in_course('imagemap', $course);
 
 if (empty($imagemaps)) {
-    notice(get_string('thereareno', 'moodle', get_string('modulenameplural', 'imagemap')),
-        new moodle_url('/course/view.php', array('id' => $course->id)));
+    notice(
+        get_string('thereareno', 'moodle', get_string('modulenameplural', 'imagemap')),
+        new moodle_url('/course/view.php', ['id' => $course->id])
+    );
 }
 
 $table = new html_table();
 $table->attributes['class'] = 'generaltable mod_index';
-$table->head = array(
+$table->head = [
     get_string('name'),
-    get_string('description')
-);
-$table->align = array('left', 'left');
+    get_string('description'),
+];
+$table->align = ['left', 'left'];
 
 foreach ($imagemaps as $imagemap) {
     $link = html_writer::link(
-        new moodle_url('/mod/imagemap/view.php', array('id' => $imagemap->coursemodule)),
+        new moodle_url('/mod/imagemap/view.php', ['id' => $imagemap->coursemodule]),
         format_string($imagemap->name)
     );
 
     $description = format_module_intro('imagemap', $imagemap, $imagemap->coursemodule);
 
-    $table->data[] = array($link, $description);
+    $table->data[] = [$link, $description];
 }
 
 echo html_writer::table($table);

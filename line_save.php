@@ -33,41 +33,41 @@ try {
 
     $cmid = required_param('cmid', PARAM_INT);
     $imagemapid = required_param('imagemapid', PARAM_INT);
-    $from_areaid = required_param('from_areaid', PARAM_INT);
-    $to_areaid = required_param('to_areaid', PARAM_INT);
+    $fromareaid = required_param('from_areaid', PARAM_INT);
+    $toareaid = required_param('to_areaid', PARAM_INT);
 
     $cm = get_coursemodule_from_id('imagemap', $cmid, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 
     require_login($course, true, $cm);
     $context = context_module::instance($cm->id);
     require_capability('mod/imagemap:manage', $context);
 
     // Validate areas exist and belong to this imagemap.
-    $from = $DB->get_record('imagemap_area', array('id' => $from_areaid, 'imagemapid' => $imagemapid), '*', MUST_EXIST);
-    $to = $DB->get_record('imagemap_area', array('id' => $to_areaid, 'imagemapid' => $imagemapid), '*', MUST_EXIST);
+    $from = $DB->get_record('imagemap_area', ['id' => $fromareaid, 'imagemapid' => $imagemapid], '*', MUST_EXIST);
+    $to = $DB->get_record('imagemap_area', ['id' => $toareaid, 'imagemapid' => $imagemapid], '*', MUST_EXIST);
 
     // Check for duplicate.
-    $exists = $DB->record_exists('imagemap_line', array(
+    $exists = $DB->record_exists('imagemap_line', [
         'imagemapid' => $imagemapid,
-        'from_areaid' => $from_areaid,
-        'to_areaid' => $to_areaid
-    ));
+        'from_areaid' => $fromareaid,
+        'to_areaid' => $toareaid,
+    ]);
 
     if ($exists) {
-        echo json_encode(array('success' => false, 'error' => get_string('line_duplicate', 'imagemap')));
+        echo json_encode(['success' => false, 'error' => get_string('line_duplicate', 'imagemap')]);
         die();
     }
 
     $record = new stdClass();
     $record->imagemapid = $imagemapid;
-    $record->from_areaid = $from_areaid;
-    $record->to_areaid = $to_areaid;
+    $record->from_areaid = $fromareaid;
+    $record->to_areaid = $toareaid;
     $record->timecreated = time();
 
     $id = $DB->insert_record('imagemap_line', $record);
 
-    echo json_encode(array('success' => true, 'id' => (int)$id));
+    echo json_encode(['success' => true, 'id' => (int)$id]);
 } catch (Exception $e) {
-    echo json_encode(array('success' => false, 'error' => $e->getMessage()));
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

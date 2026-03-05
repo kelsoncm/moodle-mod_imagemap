@@ -33,7 +33,7 @@ $string['imagemap:view'] = 'View Image Map';
 $string['imagemap:manage'] = 'Manage Image Map areas';
 $string['pluginadministration'] = 'Image Map administration';
 
-// Form strings
+// Form strings.
 $string['imagemapname'] = 'Name';
 $string['imagemapimage'] = 'Image';
 $string['managereas'] = 'Manage areas';
@@ -42,7 +42,7 @@ $string['editarea'] = 'Edit area';
 $string['deletearea'] = 'Delete area';
 $string['confirmdeletearea'] = 'Are you sure you want to delete this area?';
 
-// Area form strings
+// Area form strings.
 $string['shape'] = 'Shape';
 $string['shape_circle'] = 'Circle';
 $string['shape_rect'] = 'Rectangle';
@@ -60,23 +60,23 @@ $string['inactivefilter'] = 'Inactive CSS';
 $string['inactivefilter_help'] = 'CSS to apply when the area is inactive.';
 $string['arearestricted'] = 'This item has access restrictions.';
 
-// View strings
+// View strings.
 $string['clickarea'] = 'Click on an area';
 $string['areainactive'] = 'This area is inactive (complete {$a} first)';
 $string['noareas'] = 'No areas have been defined yet.';
 $string['coursepreviewrestricted'] = '{$a} area(s) with access restriction';
 
-// Error strings
+// Error strings.
 $string['error:invalidshape'] = 'Invalid shape type';
 $string['error:invalidtargettype'] = 'Invalid target type';
 $string['error:invalidtarget'] = 'Invalid target';
 $string['error:noimage'] = 'No image has been uploaded';
 $string['error:invalidcoords'] = 'Invalid coordinates';
 
-// Privacy
+// Privacy.
 $string['privacy:metadata'] = 'The Image Map module does not store any personal data.';
 
-// CSS Examples
+// CSS Examples.
 $string['cssexamples'] = 'CSS Examples';
 $string['viewexamples'] = 'View Examples';
 $string['managecssexamples'] = 'Manage CSS Examples';
@@ -89,7 +89,7 @@ $string['examplesaved'] = 'Example saved successfully';
 $string['noexamples'] = 'No examples defined yet';
 $string['confirmdeleteexample'] = 'Are you sure you want to delete this example?';
 
-// Toolbar / tools
+// Toolbar / tools.
 $string['tool_hand'] = 'Select';
 $string['tool_hand_help'] = 'Click to select, drag to move areas. Right-click to edit.';
 $string['tool_line'] = 'Line';

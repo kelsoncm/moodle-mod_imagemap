@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Returns the information on whether the module supports a feature
  *
@@ -60,7 +58,7 @@ function imagemap_add_instance(stdClass $imagemap, mod_imagemap_mod_form $mform 
 
     $imagemap->id = $DB->insert_record('imagemap', $imagemap);
 
-    // Save files
+    // Save files.
     if ($mform) {
         $context = context_module::instance($imagemap->coursemodule);
         file_save_draft_area_files($imagemap->image, $context->id, 'mod_imagemap', 'image', 0);
@@ -84,7 +82,7 @@ function imagemap_update_instance(stdClass $imagemap, mod_imagemap_mod_form $mfo
 
     $result = $DB->update_record('imagemap', $imagemap);
 
-    // Save files
+    // Save files.
     if ($mform) {
         $context = context_module::instance($imagemap->coursemodule);
         file_save_draft_area_files($imagemap->image, $context->id, 'mod_imagemap', 'image', 0);
@@ -259,7 +257,7 @@ function imagemap_get_area_url($area, $courseid) {
     if ($area->targettype === 'module') {
         $cm = get_coursemodule_from_id(null, (int)$area->targetid, 0, false, IGNORE_MISSING);
         if ($cm) {
-            return new moodle_url('/mod/' . $cm->modname . '/view.php', array('id' => $cm->id));
+            return new moodle_url('/mod/' . $cm->modname . '/view.php', ['id' => $cm->id]);
         }
         return null;
     }
@@ -269,7 +267,7 @@ function imagemap_get_area_url($area, $courseid) {
         $modinfo = get_fast_modinfo($course);
         $section = $modinfo->get_section_info_by_id((int)$area->targetid, IGNORE_MISSING);
         if ($section) {
-            return course_get_url($course, (object)$section, array('navigation' => true));
+            return course_get_url($course, (object)$section, ['navigation' => true]);
         }
         return null;
     }
@@ -359,7 +357,7 @@ function imagemap_sanitize_coords_for_html_map($coords) {
     }
 
     $parts = explode(',', $coords);
-    $clean = array();
+    $clean = [];
     foreach ($parts as $part) {
         $value = trim($part);
         if ($value === '' || !is_numeric($value)) {
@@ -416,7 +414,7 @@ function imagemap_cm_info_view(cm_info $cm) {
     $areas = imagemap_get_areas($imagemap->id);
 
     $summaryid = 'imagemap-cm-summary-' . $cm->id;
-    $areadata = array();
+    $areadata = [];
     $restrictedcount = 0;
 
     foreach ($areas as $area) {
@@ -484,7 +482,10 @@ function imagemap_cm_info_view(cm_info $cm) {
     $content .= html_writer::end_div();
 
     if (!$summaryscriptadded) {
-        $content .= html_writer::script("require(['mod_imagemap/summary'], function(summary) { if (summary && summary.init) { summary.init(); } });");
+        $content .= html_writer::script(
+            "require(['mod_imagemap/summary'], function(summary) {" .
+            " if (summary && summary.init) { summary.init(); } });"
+        );
         $summaryscriptadded = true;
     }
 

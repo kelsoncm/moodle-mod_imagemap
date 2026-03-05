@@ -1,5 +1,6 @@
 # Moodle specific
 /.moodle
+/.moodle-plugin-ci
 /config.php
 
 # IDE

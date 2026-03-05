@@ -34,7 +34,6 @@ require_once($CFG->dirroot . '/mod/imagemap/restore/moodle2/restore_imagemap_ste
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class restore_imagemap_activity_task extends restore_activity_task {
-
     /**
      * Define (add) particular settings this activity can have
      */
@@ -55,9 +54,9 @@ class restore_imagemap_activity_task extends restore_activity_task {
      * processed by the link decoder
      */
     public static function define_decode_contents() {
-        $contents = array();
+        $contents = [];
 
-        $contents[] = new restore_decode_content('imagemap', array('intro'), 'imagemap');
+        $contents[] = new restore_decode_content('imagemap', ['intro'], 'imagemap');
 
         return $contents;
     }
@@ -67,7 +66,7 @@ class restore_imagemap_activity_task extends restore_activity_task {
      * to the activity to be executed by the link decoder
      */
     public static function define_decode_rules() {
-        $rules = array();
+        $rules = [];
 
         $rules[] = new restore_decode_rule('IMAGEMAPINDEX', '/mod/imagemap/index.php?id=$1', 'course');
         $rules[] = new restore_decode_rule('IMAGEMAPVIEWBYID', '/mod/imagemap/view.php?id=$1', 'course_module');
@@ -81,7 +80,7 @@ class restore_imagemap_activity_task extends restore_activity_task {
      * imagemap logs
      */
     public static function define_restore_log_rules() {
-        $rules = array();
+        $rules = [];
 
         $rules[] = new restore_log_rule('imagemap', 'add', 'view.php?id={course_module}', '{imagemap}');
         $rules[] = new restore_log_rule('imagemap', 'update', 'view.php?id={course_module}', '{imagemap}');

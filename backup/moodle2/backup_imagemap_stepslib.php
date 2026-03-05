@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Define the complete imagemap structure for backup, with file and id annotations
  *
@@ -32,7 +30,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_imagemap_activity_structure_step extends backup_activity_structure_step {
-
     /**
      * Define the structure of the backup
      */
@@ -42,50 +39,50 @@ class backup_imagemap_activity_structure_step extends backup_activity_structure_
         $userinfo = $this->get_setting_value('userinfo');
 
         // Define each element separated.
-        $imagemap = new backup_nested_element('imagemap', array('id'), array(
-            'course', 'name', 'intro', 'introformat', 'timemodified', 'width', 'height'
-        ));
+        $imagemap = new backup_nested_element('imagemap', ['id'], [
+            'course', 'name', 'intro', 'introformat', 'timemodified', 'width', 'height',
+        ]);
 
         $areas = new backup_nested_element('areas');
 
-        $area = new backup_nested_element('area', array('id'), array(
+        $area = new backup_nested_element('area', ['id'], [
             'imagemapid', 'shape', 'coords', 'targettype', 'targetid', 'title',
-            'activefilter', 'inactivefilter', 'sortorder'
-        ));
+            'activefilter', 'inactivefilter', 'sortorder',
+        ]);
 
         $lines = new backup_nested_element('lines');
 
-        $line = new backup_nested_element('line', array('id'), array(
-            'imagemapid', 'from_areaid', 'to_areaid', 'timecreated'
-        ));
+        $line = new backup_nested_element('line', ['id'], [
+            'imagemapid', 'from_areaid', 'to_areaid', 'timecreated',
+        ]);
 
-        $css_examples = new backup_nested_element('css_examples');
+        $cssexamples = new backup_nested_element('css_examples');
 
-        $css_example = new backup_nested_element('css_example', array('id'), array(
-            'type', 'name', 'css_text', 'sortorder', 'timecreated', 'timemodified'
-        ));
+        $cssexample = new backup_nested_element('css_example', ['id'], [
+            'type', 'name', 'css_text', 'sortorder', 'timecreated', 'timemodified',
+        ]);
 
         // Build the tree.
         $imagemap->add_child($areas);
         $areas->add_child($area);
         $imagemap->add_child($lines);
         $lines->add_child($line);
-        $imagemap->add_child($css_examples);
-        $css_examples->add_child($css_example);
+        $imagemap->add_child($cssexamples);
+        $cssexamples->add_child($cssexample);
 
         // Define sources.
-        $imagemap->set_source_table('imagemap', array('id' => backup::VAR_ACTIVITYID));
+        $imagemap->set_source_table('imagemap', ['id' => backup::VAR_ACTIVITYID]);
 
-        $area->set_source_table('imagemap_area', array('imagemapid' => backup::VAR_PARENTID));
+        $area->set_source_table('imagemap_area', ['imagemapid' => backup::VAR_PARENTID]);
 
-        $line->set_source_table('imagemap_line', array('imagemapid' => backup::VAR_ACTIVITYID));
+        $line->set_source_table('imagemap_line', ['imagemapid' => backup::VAR_ACTIVITYID]);
 
-        // CSS examples are global, but included in backup for portability
-        $css_example->set_source_table('imagemap_css_examples', array());
+        // CSS examples are global, but included in backup for portability.
+        $cssexample->set_source_table('imagemap_css_examples', []);
 
         // Define id annotations for areas:
-        // - module links need ID remapping during restore
-        // - section and url links don't need remapping (url is literal, section stays same)
+        // - module links need ID remapping during restore.
+        // - section and url links don't need remapping (url is literal, section stays same).
         $area->annotate_ids('module', 'targetid');
 
         // Define file annotations.

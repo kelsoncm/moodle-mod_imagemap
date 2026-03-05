@@ -25,20 +25,20 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
-$id = required_param('id', PARAM_INT); // Course module ID
+$id = required_param('id', PARAM_INT); // Course module ID.
 $action = optional_param('action', '', PARAM_ALPHA);
 $areaid = optional_param('areaid', 0, PARAM_INT);
 
 $cm = get_coursemodule_from_id('imagemap', $id, 0, false, MUST_EXIST);
-$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-$imagemap = $DB->get_record('imagemap', array('id' => $cm->instance), '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+$imagemap = $DB->get_record('imagemap', ['id' => $cm->instance], '*', MUST_EXIST);
 
 require_login($course, true, $cm);
 
 $context = context_module::instance($cm->id);
 require_capability('mod/imagemap:manage', $context);
 
-$PAGE->set_url('/mod/imagemap/areas.php', array('id' => $cm->id));
+$PAGE->set_url('/mod/imagemap/areas.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($imagemap->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
@@ -46,31 +46,36 @@ $PAGE->requires->css('/mod/imagemap/editor.css');
 $PAGE->requires->css('/mod/imagemap/styles.css');
 $PAGE->requires->js('/mod/imagemap/css_preview.js');
 
-// Handle actions
+// Handle actions.
 if ($action === 'delete' && $areaid && confirm_sesskey()) {
-    // Delete related lines first
-    $dbman_check = $DB->get_manager();
-    $linetable_check = new xmldb_table('imagemap_line');
-    if ($dbman_check->table_exists($linetable_check)) {
-        $DB->delete_records_select('imagemap_line',
+    // Delete related lines first.
+    $dbmancheck = $DB->get_manager();
+    $linetablecheck = new xmldb_table('imagemap_line');
+    if ($dbmancheck->table_exists($linetablecheck)) {
+        $DB->delete_records_select(
+            'imagemap_line',
             'from_areaid = :from OR to_areaid = :to',
-            array('from' => $areaid, 'to' => $areaid)
+            ['from' => $areaid, 'to' => $areaid]
         );
     }
-    $DB->delete_records('imagemap_area', array('id' => $areaid, 'imagemapid' => $imagemap->id));
-    redirect(new moodle_url('/mod/imagemap/areas.php', array('id' => $cm->id)), 
-             get_string('deletearea', 'imagemap'), null, \core\output\notification::NOTIFY_SUCCESS);
+    $DB->delete_records('imagemap_area', ['id' => $areaid, 'imagemapid' => $imagemap->id]);
+    redirect(
+        new moodle_url('/mod/imagemap/areas.php', ['id' => $cm->id]),
+        get_string('deletearea', 'imagemap'),
+        null,
+        \core\output\notification::NOTIFY_SUCCESS
+    );
 }
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('managereas', 'imagemap'));
 
-// Get the image file
+// Get the image file.
 $fs = get_file_storage();
 $files = $fs->get_area_files($context->id, 'mod_imagemap', 'image', 0, 'itemid, filepath, filename', false);
 $imagefile = reset($files);
 
-$templatedata = array();
+$templatedata = [];
 
 if ($imagefile) {
     $imageurl = moodle_url::make_pluginfile_url(
@@ -81,17 +86,17 @@ if ($imagefile) {
         $imagefile->get_filepath(),
         $imagefile->get_filename()
     );
-    
-    // Get existing areas
+
+    // Get existing areas.
     $areas = imagemap_get_areas($imagemap->id);
-    $areasdata = array();
-    $areasfortemplate = array();
-    
-    $areasbyid = array();
+    $areasdata = [];
+    $areasfortemplate = [];
+
+    $areasbyid = [];
     foreach ($areas as $area) {
         $areasbyid[$area->id] = $area;
         $targetdata = imagemap_get_area_target_data($area, $course, $context);
-        $areasdata[] = array(
+        $areasdata[] = [
             'id' => (int)$area->id,
             'shape' => $area->shape,
             'coords' => $area->coords,
@@ -101,41 +106,41 @@ if ($imagefile) {
             'active' => (bool)$targetdata['active'],
             'tooltip' => $targetdata['tooltip'],
             'activefilter' => $area->activefilter,
-            'inactivefilter' => $area->inactivefilter
-        );
-        
-        $deleteurl = new moodle_url('/mod/imagemap/areas.php', array(
+            'inactivefilter' => $area->inactivefilter,
+        ];
+
+        $deleteurl = new moodle_url('/mod/imagemap/areas.php', [
             'id' => $cm->id,
             'action' => 'delete',
             'areaid' => $area->id,
-            'sesskey' => sesskey()
-        ));
-        
-        $areasfortemplate[] = array(
+            'sesskey' => sesskey(),
+        ]);
+
+        $areasfortemplate[] = [
             'id' => (int)$area->id,
             'title' => s($area->title),
             'shape' => s($area->shape),
             'target_label' => '',
             'delete_url' => $deleteurl->out(),
             'delete' => get_string('delete'),
-            'lines_count' => 0
-        );
+            'lines_count' => 0,
+        ];
     }
-    
-    // Fetch CSS examples for active and inactive filters
-    $active_examples = $DB->get_records('imagemap_css_examples', array('type' => 'active'), 'sortorder ASC, name ASC');
-    $inactive_examples = $DB->get_records('imagemap_css_examples', array('type' => 'inactive'), 'sortorder ASC, name ASC');
-    
-    // If no examples exist, create default ones (same as admin.php)
-    if (empty($active_examples)) {
-        $test_examples = array(
-            array('type' => 'active', 'name' => 'No Effect', 'css_text' => 'none', 'sortorder' => 0),
-            array('type' => 'active', 'name' => 'Grayscale', 'css_text' => 'filter: grayscale(100%)', 'sortorder' => 1),
-            array('type' => 'active', 'name' => 'Opacity 50%', 'css_text' => 'filter: opacity(0.5)', 'sortorder' => 2),
-            array('type' => 'active', 'name' => 'Blur', 'css_text' => 'filter: blur(2px)', 'sortorder' => 3),
-        );
-        
-        foreach ($test_examples as $example) {
+
+    // Fetch CSS examples for active and inactive filters.
+    $activeexamples = $DB->get_records('imagemap_css_examples', ['type' => 'active'], 'sortorder ASC, name ASC');
+    $inactiveexamples = $DB->get_records('imagemap_css_examples', ['type' => 'inactive'], 'sortorder ASC, name ASC');
+
+    // If no examples exist, create default ones (same as admin.php).
+    if (empty($activeexamples)) {
+        $testexamples = [
+            ['type' => 'active', 'name' => 'No Effect', 'css_text' => 'none', 'sortorder' => 0],
+            ['type' => 'active', 'name' => 'Grayscale', 'css_text' => 'filter: grayscale(100%)', 'sortorder' => 1],
+            ['type' => 'active', 'name' => 'Opacity 50%', 'css_text' => 'filter: opacity(0.5)', 'sortorder' => 2],
+            ['type' => 'active', 'name' => 'Blur', 'css_text' => 'filter: blur(2px)', 'sortorder' => 3],
+        ];
+
+        foreach ($testexamples as $example) {
             $record = new stdClass();
             $record->type = $example['type'];
             $record->name = $example['name'];
@@ -145,19 +150,19 @@ if ($imagefile) {
             $record->timemodified = time();
             $DB->insert_record('imagemap_css_examples', $record);
         }
-        
-        // Reload examples
-        $active_examples = $DB->get_records('imagemap_css_examples', array('type' => 'active'), 'sortorder ASC, name ASC');
+
+        // Reload examples.
+        $activeexamples = $DB->get_records('imagemap_css_examples', ['type' => 'active'], 'sortorder ASC, name ASC');
     }
-    
-    if (empty($inactive_examples)) {
-        $test_examples = array(
-            array('type' => 'inactive', 'name' => 'No Effect', 'css_text' => 'none', 'sortorder' => 0),
-            array('type' => 'inactive', 'name' => 'Grayed Out', 'css_text' => 'filter: grayscale(100%);', 'sortorder' => 1),
-            array('type' => 'inactive', 'name' => 'Blurred', 'css_text' => 'filter: blur(3px);', 'sortorder' => 2),
-        );
-        
-        foreach ($test_examples as $example) {
+
+    if (empty($inactiveexamples)) {
+        $testexamples = [
+            ['type' => 'inactive', 'name' => 'No Effect', 'css_text' => 'none', 'sortorder' => 0],
+            ['type' => 'inactive', 'name' => 'Grayed Out', 'css_text' => 'filter: grayscale(100%);', 'sortorder' => 1],
+            ['type' => 'inactive', 'name' => 'Blurred', 'css_text' => 'filter: blur(3px);', 'sortorder' => 2],
+        ];
+
+        foreach ($testexamples as $example) {
             $record = new stdClass();
             $record->type = $example['type'];
             $record->name = $example['name'];
@@ -167,35 +172,35 @@ if ($imagefile) {
             $record->timemodified = time();
             $DB->insert_record('imagemap_css_examples', $record);
         }
-        
-        // Reload examples
-        $inactive_examples = $DB->get_records('imagemap_css_examples', array('type' => 'inactive'), 'sortorder ASC, name ASC');
+
+        // Reload examples.
+        $inactiveexamples = $DB->get_records('imagemap_css_examples', ['type' => 'inactive'], 'sortorder ASC, name ASC');
     }
-    
-    $active_examples_template = array();
-    $inactive_examples_template = array();
-    
-    foreach ($active_examples as $example) {
-        $active_examples_template[] = array(
+
+    $activeexamplestemplate = [];
+    $inactiveexamplestemplate = [];
+
+    foreach ($activeexamples as $example) {
+        $activeexamplestemplate[] = [
             'id' => $example->id,
             'name' => $example->name,
-            'css' => $example->css
-        );
+            'css' => $example->css,
+        ];
     }
-    
-    foreach ($inactive_examples as $example) {
-        $inactive_examples_template[] = array(
+
+    foreach ($inactiveexamples as $example) {
+        $inactiveexamplestemplate[] = [
             'id' => $example->id,
             'name' => $example->name,
-            'css' => $example->css
-        );
+            'css' => $example->css,
+        ];
     }
-    
+
     // Build target options with hierarchy (sections, subsections, modules).
     $modinfo = get_fast_modinfo($course);
     $allsections = $modinfo->get_section_info_all();
-    $sectionwithchildren = array();
-    $delegatedchildren = array();
+    $sectionwithchildren = [];
+    $delegatedchildren = [];
 
     foreach ($allsections as $section) {
         $sectiondelegated = $section->get_component_instance();
@@ -208,7 +213,7 @@ if ($imagefile) {
         }
     }
 
-    $modulelabels = array();
+    $modulelabels = [];
     foreach ($modinfo->get_cms() as $modcm) {
         if ($modcm->deletioninprogress) {
             continue;
@@ -217,31 +222,33 @@ if ($imagefile) {
             ' (' . get_string('modulename', $modcm->modname) . ')';
     }
 
-    $sectionlabels = array();
+    $sectionlabels = [];
     foreach ($allsections as $section) {
         $sectionlabels[$section->id] = get_section_name($course, $section);
     }
 
-    $targetoptions = array();
-    $indent = function(int $level): string {
+    $targetoptions = [];
+    $indent = function (int $level): string {
         return str_repeat('-- ', $level);
     };
-    $add_section_option = function($section, int $level) use (&$targetoptions, $indent, $course) {
-        $targetoptions[] = array(
+    $addsectionoption = function ($section, int $level) use (&$targetoptions, $indent, $course) {
+        $targetoptions[] = [
             'value' => 'section:' . $section->id,
-            'label' => $indent($level) . get_section_name($course, $section)
-        );
+            'label' => $indent($level) . get_section_name($course, $section),
+        ];
     };
-    $add_module_options = function($section, int $level) use (&$targetoptions, $indent, $modinfo, $cm) {
+    $addmoduleoptions = function ($section, int $level) use (&$targetoptions, $indent, $modinfo, $cm) {
         foreach ($modinfo->get_cms() as $modcm) {
-            if ($modcm->sectionnum == $section->section &&
+            if (
+                $modcm->sectionnum == $section->section &&
                 $modcm->id != $cm->id &&
-                !$modcm->deletioninprogress) {
-                $targetoptions[] = array(
+                !$modcm->deletioninprogress
+            ) {
+                $targetoptions[] = [
                     'value' => 'module:' . $modcm->id,
                     'label' => $indent($level) . format_string($modcm->name) .
-                        ' (' . get_string('modulename', $modcm->modname) . ')'
-                );
+                        ' (' . get_string('modulename', $modcm->modname) . ')',
+                ];
             }
         }
     };
@@ -250,12 +257,12 @@ if ($imagefile) {
         if (isset($delegatedchildren[$section->section])) {
             continue;
         }
-        $add_section_option($section, 0);
-        $add_module_options($section, 1);
+        $addsectionoption($section, 0);
+        $addmoduleoptions($section, 1);
         if (isset($sectionwithchildren[$section->section])) {
             foreach ($sectionwithchildren[$section->section] as $subsection) {
-                $add_section_option($subsection, 1);
-                $add_module_options($subsection, 2);
+                $addsectionoption($subsection, 1);
+                $addmoduleoptions($subsection, 2);
             }
         }
     }
@@ -273,21 +280,21 @@ if ($imagefile) {
         $aft['target_label'] = $targetlabel ?: get_string('targetmissing', 'imagemap');
     }
     unset($aft);
-    
-    // Load lines between areas
-    $linesdata = array();
+
+    // Load lines between areas.
+    $linesdata = [];
     if ($dbman = $DB->get_manager()) {
         $table = new xmldb_table('imagemap_line');
         if ($dbman->table_exists($table)) {
-            $lines = $DB->get_records('imagemap_line', array('imagemapid' => $imagemap->id));
+            $lines = $DB->get_records('imagemap_line', ['imagemapid' => $imagemap->id]);
             foreach ($lines as $line) {
-                $linesdata[] = array(
+                $linesdata[] = [
                     'id' => (int)$line->id,
                     'from_areaid' => (int)$line->from_areaid,
-                    'to_areaid' => (int)$line->to_areaid
-                );
+                    'to_areaid' => (int)$line->to_areaid,
+                ];
             }
-            // Count lines per area
+            // Count lines per area.
             foreach ($areasfortemplate as &$aft) {
                 $count = 0;
                 foreach ($linesdata as $ld) {
@@ -300,35 +307,35 @@ if ($imagefile) {
             unset($aft);
         }
     }
-    
-    // Prepare CSS examples modal
-    $active_examples_modal = array();
-    $inactive_examples_modal = array();
-    
-    foreach ($active_examples as $example) {
-        $active_examples_modal[] = array(
+
+    // Prepare CSS examples modal.
+    $activeexamplesmodal = [];
+    $inactiveexamplesmodal = [];
+
+    foreach ($activeexamples as $example) {
+        $activeexamplesmodal[] = [
             'name' => s($example->name),
             'css_text' => s($example->css_text),
-        );
+        ];
     }
-    
-    foreach ($inactive_examples as $example) {
-        $inactive_examples_modal[] = array(
+
+    foreach ($inactiveexamples as $example) {
+        $inactiveexamplesmodal[] = [
             'name' => s($example->name),
             'css_text' => s($example->css_text),
-        );
+        ];
     }
-    
-    $modal_data = array(
-        'active_examples' => $active_examples_modal,
-        'inactive_examples' => $inactive_examples_modal,
-    );
-    $css_examples_modal = $OUTPUT->render_from_template('mod_imagemap/css_examples_modal', $modal_data);
-    
-    // Debug: Check examples count
-    echo "<!-- Debug: Active examples: " . count($active_examples) . " | Inactive examples: " . count($inactive_examples) . " -->\n";
-    
-    $templatedata = array(
+
+    $modaldata = [
+        'active_examples' => $activeexamplesmodal,
+        'inactive_examples' => $inactiveexamplesmodal,
+    ];
+    $cssexamplesmodal = $OUTPUT->render_from_template('mod_imagemap/css_examples_modal', $modaldata);
+
+    // Debug: Check examples count.
+    echo "<!-- Debug: Active examples: " . count($activeexamples) . " | Inactive examples: " . count($inactiveexamples) . " -->\n";
+
+    $templatedata = [
         'has_image' => true,
         'imageUrl' => $imageurl->out(),
         'areasData' => $areasdata,
@@ -336,13 +343,13 @@ if ($imagefile) {
         'imagemapid' => $imagemap->id,
         'sesskey' => sesskey(),
         'area_save_url' => new moodle_url('/mod/imagemap/area_save.php'),
-        'css_examples_modal' => $css_examples_modal,
+        'css_examples_modal' => $cssexamplesmodal,
         'has_areas' => !empty($areas),
         'areas' => $areasfortemplate,
         'target_options' => $targetoptions,
-        'active_examples' => $active_examples_template,
-        'inactive_examples' => $inactive_examples_template,
-        // Language strings
+        'active_examples' => $activeexamplestemplate,
+        'inactive_examples' => $inactiveexamplestemplate,
+        // Language strings.
         'shape_label' => get_string('shape', 'imagemap'),
         'shape_rect' => get_string('shape_rect', 'imagemap'),
         'shape_circle' => get_string('shape_circle', 'imagemap'),
@@ -365,24 +372,24 @@ if ($imagefile) {
         'confirmdeletearea' => get_string('confirmdeletearea', 'imagemap'),
         'noareas' => get_string('noareas', 'imagemap'),
         'error_noimage' => get_string('error:noimage', 'imagemap'),
-        // Toolbar strings
+        // Language strings..
         'tool_hand' => get_string('tool_hand', 'imagemap'),
         'tool_line' => get_string('tool_line', 'imagemap'),
         'tool_eraser' => get_string('tool_eraser', 'imagemap'),
-        'connections_label' => get_string('connections', 'imagemap')
-    );
-    
-    // Load editor script inline instead of external to avoid loading issues
+        'connections_label' => get_string('connections', 'imagemap'),
+    ];
+
+    // Load editor script inline instead of external to avoid loading issues.
     $jscode = file_get_contents(__DIR__ . '/editor.js');
     $PAGE->requires->js_init_code('
-        window.imagemapEditorData = ' . json_encode(array(
+        window.imagemapEditorData = ' . json_encode([
             'imageUrl' => $imageurl->out(),
             'areasData' => $areasdata,
             'linesData' => $linesdata,
             'sesskey' => sesskey(),
             'cmid' => $cm->id,
             'imagemapid' => $imagemap->id,
-            'strings' => array(
+            'strings' => [
                 'addarea' => get_string('addarea', 'imagemap'),
                 'editarea' => get_string('editarea', 'imagemap'),
                 'confirmdeletearea' => get_string('confirmdeletearea', 'imagemap'),
@@ -393,26 +400,26 @@ if ($imagefile) {
                 'line_saved' => get_string('line_saved', 'imagemap'),
                 'line_deleted' => get_string('line_deleted', 'imagemap'),
                 'eraser_hint' => get_string('eraser_hint', 'imagemap'),
-                'confirm_delete_line' => get_string('confirm_delete_line', 'imagemap')
-            )
-        )) . ';
+                'confirm_delete_line' => get_string('confirm_delete_line', 'imagemap'),
+            ],
+        ]) . ';
         ' . $jscode . '
-        // Initialize when DOM is ready
+        // Initialize when DOM is ready.
         if (typeof ImageMapEditor !== "undefined") {
             ImageMapEditor.init();
         }
     ');
 } else {
-    $templatedata = array(
+    $templatedata = [
         'has_image' => false,
-        'error_noimage' => get_string('error:noimage', 'imagemap')
-    );
+        'error_noimage' => get_string('error:noimage', 'imagemap'),
+    ];
 }
 
 echo $OUTPUT->render_from_template('mod_imagemap/editor', $templatedata);
 
 echo '<div class="mt-3">';
-echo '<a href="' . new moodle_url('/mod/imagemap/view.php', array('id' => $cm->id)) . '" class="btn btn-secondary">' . 
+echo '<a href="' . new moodle_url('/mod/imagemap/view.php', ['id' => $cm->id]) . '" class="btn btn-secondary">' .
      get_string('back') . '</a>';
 echo '</div>';
 

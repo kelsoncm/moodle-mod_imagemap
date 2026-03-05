@@ -33,7 +33,7 @@ $string['imagemap:view'] = 'Visualizar Mapa de Imagem';
 $string['imagemap:manage'] = 'Gerenciar áreas do Mapa de Imagem';
 $string['pluginadministration'] = 'Administração do Mapa de Imagem';
 
-// Form strings
+// Form strings.
 $string['imagemapname'] = 'Nome';
 $string['imagemapimage'] = 'Imagem';
 $string['managereas'] = 'Gerenciar áreas';
@@ -42,7 +42,7 @@ $string['editarea'] = 'Editar área';
 $string['deletearea'] = 'Excluir área';
 $string['confirmdeletearea'] = 'Tem certeza de que deseja excluir esta área?';
 
-// Area form strings
+// Area form strings.
 $string['shape'] = 'Forma';
 $string['shape_circle'] = 'Círculo';
 $string['shape_rect'] = 'Retângulo';
@@ -60,13 +60,13 @@ $string['inactivefilter'] = 'CSS inativo';
 $string['inactivefilter_help'] = 'CSS a ser aplicado quando a área estiver inativa.';
 $string['arearestricted'] = 'Este item possui restrições de acesso.';
 
-// View strings
+// View strings.
 $string['clickarea'] = 'Clique em uma área';
 $string['areainactive'] = 'Esta área está inativa (complete {$a} primeiro)';
 $string['noareas'] = 'Nenhuma área foi definida ainda.';
 $string['coursepreviewrestricted'] = '{$a} área(s) com restrição de acesso';
 
-// Admin strings
+// Admin strings.
 $string['cssexamples'] = 'Exemplos de CSS';
 $string['viewexamples'] = 'Ver Exemplos';
 $string['managecssexamples'] = 'Gerenciar exemplos de CSS';
@@ -77,12 +77,12 @@ $string['preview'] = 'Pré-visualização';
 $string['edit'] = 'Editar';
 $string['delete'] = 'Excluir';
 
-// Error strings
+// Error strings.
 $string['error:invalidshape'] = 'Tipo de forma inválido';
 $string['error:invalidtargettype'] = 'Tipo de destino inválido';
 $string['error:invalidtarget'] = 'Destino inválido';
 $string['error:noimage'] = 'Nenhuma imagem foi enviada';
 $string['error:invalidcoords'] = 'Coordenadas inválidas';
 
-// Privacy
+// Privacy.
 $string['privacy:metadata'] = 'O módulo Mapa de Imagem não armazena nenhum dado pessoal.';

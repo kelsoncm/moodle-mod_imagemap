@@ -24,8 +24,6 @@
 
 namespace mod_imagemap\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The mod_imagemap course module viewed event class.
  *
@@ -34,7 +32,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_module_viewed extends \core\event\course_module_viewed {
-
     /**
      * Init method.
      *
@@ -50,6 +47,6 @@ class course_module_viewed extends \core\event\course_module_viewed {
      * Get objectid mapping
      */
     public static function get_objectid_mapping() {
-        return array('db' => 'imagemap', 'restore' => 'imagemap');
+        return ['db' => 'imagemap', 'restore' => 'imagemap'];
     }
 }

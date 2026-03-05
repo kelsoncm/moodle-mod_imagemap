@@ -26,14 +26,14 @@ require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
 
-$id = optional_param('id', 0, PARAM_INT); // Course module ID
+$id = optional_param('id', 0, PARAM_INT); // Course module ID.
 
 if ($id) {
     $cm = get_coursemodule_from_id('imagemap', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $imagemap = $DB->get_record('imagemap', array('id' => $cm->instance), '*', MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+    $imagemap = $DB->get_record('imagemap', ['id' => $cm->instance], '*', MUST_EXIST);
 } else {
-    print_error('missingparameter');
+    throw new moodle_exception('missingparameter');
 }
 
 require_login($course, true, $cm);
@@ -49,7 +49,7 @@ $event->add_record_snapshot('course', $course);
 $event->add_record_snapshot('imagemap', $imagemap);
 $event->trigger();
 
-$PAGE->set_url('/mod/imagemap/view.php', array('id' => $cm->id));
+$PAGE->set_url('/mod/imagemap/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($imagemap->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
@@ -61,7 +61,7 @@ $imagefile = reset($files);
 
 echo $OUTPUT->header();
 
-$areadata = array();
+$areadata = [];
 
 if ($imagefile) {
     $imageurl = moodle_url::make_pluginfile_url(
@@ -72,32 +72,32 @@ if ($imagefile) {
         $imagefile->get_filepath(),
         $imagefile->get_filename()
     );
-    
-    // Get areas
+
+    // Get the image file..
     $areas = imagemap_get_areas($imagemap->id);
-    
-    // Load connection lines
-    $linesviewdata = array();
+
+    // Load connection lines.
+    $linesviewdata = [];
     $dbman = $DB->get_manager();
     $linetable = new xmldb_table('imagemap_line');
     if ($dbman->table_exists($linetable)) {
-        $lines = $DB->get_records('imagemap_line', array('imagemapid' => $imagemap->id));
+        $lines = $DB->get_records('imagemap_line', ['imagemapid' => $imagemap->id]);
         foreach ($lines as $line) {
-            $linesviewdata[] = array(
+            $linesviewdata[] = [
                 'from_areaid' => (int)$line->from_areaid,
-                'to_areaid' => (int)$line->to_areaid
-            );
+                'to_areaid' => (int)$line->to_areaid,
+            ];
         }
     }
-    
-    // Prepare area data for JavaScript
-    $areadata = array();
+
+    // Prepare area data for JavaScript.
+    $areadata = [];
     foreach ($areas as $area) {
         $targetdata = imagemap_get_area_target_data($area, $course, $context);
         $isactive = $targetdata['active'];
         $url = $targetdata['url'];
-        
-        $areadata[] = array(
+
+        $areadata[] = [
             'id' => (int)$area->id,
             'shape' => $area->shape,
             'coords' => $area->coords,
@@ -106,29 +106,28 @@ if ($imagefile) {
             'active' => $isactive,
             'tooltip' => $targetdata['tooltip'],
             'activefilter' => $area->activefilter ?: 'none',
-            'inactivefilter' => $area->inactivefilter ?: 'filter: grayscale(100%);'
-        );
+            'inactivefilter' => $area->inactivefilter ?: 'filter: grayscale(100%);',
+        ];
     }
 
-    // Prepare template data
-    $template_data = array(
+    // Prepare template data.
+    $templatedata = [
         'has_image' => !empty($imagefile),
         'imagemap_id' => $imagemap->id,
         'has_manage' => has_capability('mod/imagemap:manage', $context),
-        'manage_url' => new moodle_url('/mod/imagemap/areas.php', array('id' => $cm->id)),
+        'manage_url' => new moodle_url('/mod/imagemap/areas.php', ['id' => $cm->id]),
         'manage_text' => get_string('managereas', 'imagemap'),
         'no_image_text' => get_string('error:noimage', 'imagemap'),
-        'edit_settings_url' => new moodle_url('/course/modedit.php', array('update' => $cm->id, 'return' => 1)),
+        'edit_settings_url' => new moodle_url('/course/modedit.php', ['update' => $cm->id, 'return' => 1]),
         'edit_settings_text' => get_string('editsettings', 'moodle'),
-    );
+    ];
 
-    echo $OUTPUT->render_from_template('mod_imagemap/view', $template_data);
-    
+    echo $OUTPUT->render_from_template('mod_imagemap/view', $templatedata);
+
     if (!empty($imagefile)) {
-        // Add JavaScript to render the canvas imagemap with CSS overlays
-        $PAGE->requires->js_call_amd('mod_imagemap/view', 'init', array($imagemap->id, $areadata, $imageurl->out(), $linesviewdata));
+        // Add JavaScript to render the canvas imagemap with CSS overlays.
+        $PAGE->requires->js_call_amd('mod_imagemap/view', 'init', [$imagemap->id, $areadata, $imageurl->out(), $linesviewdata]);
     }
-
 }
 
 echo $OUTPUT->footer();

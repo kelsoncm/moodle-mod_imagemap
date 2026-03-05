@@ -22,8 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Execute imagemap upgrade from the given old version
  *
@@ -70,41 +68,123 @@ function xmldb_imagemap_upgrade($oldversion) {
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
         // Adding keys to table imagemap_css_examples.
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
 
         // Adding indexes to table imagemap_css_examples.
-        $table->add_index('type', XMLDB_INDEX_NOTUNIQUE, array('type'));
-        $table->add_index('sortorder', XMLDB_INDEX_NOTUNIQUE, array('sortorder'));
+        $table->add_index('type', XMLDB_INDEX_NOTUNIQUE, ['type']);
+        $table->add_index('sortorder', XMLDB_INDEX_NOTUNIQUE, ['sortorder']);
 
         // Conditionally launch create table for imagemap_css_examples.
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
-            
-            // Add default examples
-            $examples = array(
-                // Active examples
-                array('type' => 'active', 'name' => 'Sem Efeito', 'css_text' => 'none', 'sortorder' => 0),
-                array('type' => 'active', 'name' => 'Bright Glow', 'css_text' => 'filter: brightness(1.2) drop-shadow(0 0 10px rgba(255,255,0,0.8));', 'sortorder' => 1),
-                array('type' => 'active', 'name' => 'Green Border', 'css_text' => 'border: 3px solid #00ff00; background: rgba(0,255,0,0.2);', 'sortorder' => 2),
-                array('type' => 'active', 'name' => 'Golden Glow', 'css_text' => 'box-shadow: 0 0 20px rgba(255,215,0,0.8);', 'sortorder' => 3),
-                array('type' => 'active', 'name' => 'Blue Highlight', 'css_text' => 'filter: brightness(1.1) saturate(1.3) hue-rotate(200deg);', 'sortorder' => 4),
-                array('type' => 'active', 'name' => 'Rainbow Border', 'css_text' => 'border: 4px solid; border-image: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet) 1;', 'sortorder' => 5),
-                array('type' => 'active', 'name' => 'Neon Effect', 'css_text' => 'filter: brightness(1.5) contrast(1.2) drop-shadow(0 0 5px #00ffff) drop-shadow(0 0 10px #00ffff);', 'sortorder' => 6),
-                array('type' => 'active', 'name' => 'Warm Glow', 'css_text' => 'filter: sepia(0.3) brightness(1.1) contrast(1.1) saturate(1.2);', 'sortorder' => 7),
-                array('type' => 'active', 'name' => 'Crystal Clear', 'css_text' => 'filter: brightness(1.3) contrast(1.2) saturate(1.5);', 'sortorder' => 8),
-                
-                // Inactive examples
-                array('type' => 'inactive', 'name' => 'Sem Efeito', 'css_text' => 'none', 'sortorder' => 0),
-                array('type' => 'inactive', 'name' => 'Grayed Out', 'css_text' => 'filter: grayscale(100%);', 'sortorder' => 1),
-                array('type' => 'inactive', 'name' => 'Dark Overlay', 'css_text' => 'background: rgba(0,0,0,0.6);', 'sortorder' => 2),
-                array('type' => 'inactive', 'name' => 'Blurred', 'css_text' => 'filter: blur(3px);', 'sortorder' => 3),
-                array('type' => 'inactive', 'name' => 'Desaturated', 'css_text' => 'filter: brightness(0.4) grayscale(0.5);', 'sortorder' => 4),
-                array('type' => 'inactive', 'name' => 'Low Contrast', 'css_text' => 'filter: contrast(0.5) brightness(0.7);', 'sortorder' => 5),
-                array('type' => 'inactive', 'name' => 'Muted Colors', 'css_text' => 'filter: saturate(0.2) brightness(0.8);', 'sortorder' => 6),
-                array('type' => 'inactive', 'name' => 'Foggy', 'css_text' => 'filter: blur(2px) brightness(0.9) contrast(0.8);', 'sortorder' => 7),
-                array('type' => 'inactive', 'name' => 'Shadowed', 'css_text' => 'filter: brightness(0.5) drop-shadow(0 0 5px rgba(0,0,0,0.5));', 'sortorder' => 8),
-            );
-            
+
+            // Add default examples.
+            $examples = [
+                // Active examples.
+                ['type' => 'active', 'name' => 'Sem Efeito', 'css_text' => 'none', 'sortorder' => 0],
+                [
+                    'type' => 'active',
+                    'name' => 'Bright Glow',
+                    'css_text' => 'filter: brightness(1.2) drop-shadow(0 0 10px rgba(255,255,0,0.8));',
+                    'sortorder' => 1,
+                ],
+                [
+                    'type' => 'active',
+                    'name' => 'Green Border',
+                    'css_text' => 'border: 3px solid #00ff00; background: rgba(0,255,0,0.2);',
+                    'sortorder' => 2,
+                ],
+                [
+                    'type' => 'active',
+                    'name' => 'Golden Glow',
+                    'css_text' => 'box-shadow: 0 0 20px rgba(255,215,0,0.8);',
+                    'sortorder' => 3,
+                ],
+                [
+                    'type' => 'active',
+                    'name' => 'Blue Highlight',
+                    'css_text' => 'filter: brightness(1.1) saturate(1.3) hue-rotate(200deg);',
+                    'sortorder' => 4,
+                ],
+                [
+                    'type' => 'active',
+                    'name' => 'Rainbow Border',
+                    'css_text' => 'border: 4px solid; border-image: linear-gradient(45deg, red, orange, '
+                        . 'yellow, green, blue, indigo, violet) 1;',
+                    'sortorder' => 5,
+                ],
+                [
+                    'type' => 'active',
+                    'name' => 'Neon Effect',
+                    'css_text' => 'filter: brightness(1.5) contrast(1.2) drop-shadow(0 0 5px #00ffff) '
+                        . 'drop-shadow(0 0 10px #00ffff);',
+                    'sortorder' => 6,
+                ],
+                [
+                    'type' => 'active',
+                    'name' => 'Warm Glow',
+                    'css_text' => 'filter: sepia(0.3) brightness(1.1) contrast(1.1) saturate(1.2);',
+                    'sortorder' => 7,
+                ],
+                [
+                    'type' => 'active',
+                    'name' => 'Crystal Clear',
+                    'css_text' => 'filter: brightness(1.3) contrast(1.2) saturate(1.5);',
+                    'sortorder' => 8,
+                ],
+
+                // Inactive examples.
+                ['type' => 'inactive', 'name' => 'Sem Efeito', 'css_text' => 'none', 'sortorder' => 0],
+                [
+                    'type' => 'inactive',
+                    'name' => 'Grayed Out',
+                    'css_text' => 'filter: grayscale(100%);',
+                    'sortorder' => 1,
+                ],
+                [
+                    'type' => 'inactive',
+                    'name' => 'Dark Overlay',
+                    'css_text' => 'background: rgba(0,0,0,0.6);',
+                    'sortorder' => 2,
+                ],
+                [
+                    'type' => 'inactive',
+                    'name' => 'Blurred',
+                    'css_text' => 'filter: blur(3px);',
+                    'sortorder' => 3,
+                ],
+                [
+                    'type' => 'inactive',
+                    'name' => 'Desaturated',
+                    'css_text' => 'filter: brightness(0.4) grayscale(0.5);',
+                    'sortorder' => 4,
+                ],
+                [
+                    'type' => 'inactive',
+                    'name' => 'Low Contrast',
+                    'css_text' => 'filter: contrast(0.5) brightness(0.7);',
+                    'sortorder' => 5,
+                ],
+                [
+                    'type' => 'inactive',
+                    'name' => 'Muted Colors',
+                    'css_text' => 'filter: saturate(0.2) brightness(0.8);',
+                    'sortorder' => 6,
+                ],
+                [
+                    'type' => 'inactive',
+                    'name' => 'Foggy',
+                    'css_text' => 'filter: blur(2px) brightness(0.9) contrast(0.8);',
+                    'sortorder' => 7,
+                ],
+                [
+                    'type' => 'inactive',
+                    'name' => 'Shadowed',
+                    'css_text' => 'filter: brightness(0.5) drop-shadow(0 0 5px rgba(0,0,0,0.5));',
+                    'sortorder' => 8,
+                ],
+            ];
+
             foreach ($examples as $example) {
                 $record = new stdClass();
                 $record->type = $example['type'];
@@ -118,7 +198,7 @@ function xmldb_imagemap_upgrade($oldversion) {
         }
 
         // Imagemap savepoint reached.
-        upgrade_mod_savepoint(true, 2026013102, 'imagemap');
+        upgrade_mod_savepoint(true, 2026013101, 'imagemap');
     }
 
     if ($oldversion < 2026021001) {
@@ -131,12 +211,12 @@ function xmldb_imagemap_upgrade($oldversion) {
         $table->add_field('to_areaid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-        $table->add_key('imagemapid', XMLDB_KEY_FOREIGN, array('imagemapid'), 'imagemap', array('id'));
-        $table->add_key('from_areaid', XMLDB_KEY_FOREIGN, array('from_areaid'), 'imagemap_area', array('id'));
-        $table->add_key('to_areaid', XMLDB_KEY_FOREIGN, array('to_areaid'), 'imagemap_area', array('id'));
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('imagemapid', XMLDB_KEY_FOREIGN, ['imagemapid'], 'imagemap', ['id']);
+        $table->add_key('from_areaid', XMLDB_KEY_FOREIGN, ['from_areaid'], 'imagemap_area', ['id']);
+        $table->add_key('to_areaid', XMLDB_KEY_FOREIGN, ['to_areaid'], 'imagemap_area', ['id']);
 
-        $table->add_index('imagemapid_from_to', XMLDB_INDEX_UNIQUE, array('imagemapid', 'from_areaid', 'to_areaid'));
+        $table->add_index('imagemapid_from_to', XMLDB_INDEX_UNIQUE, ['imagemapid', 'from_areaid', 'to_areaid']);
 
         if (!$dbman->table_exists($table)) {
             $dbman->create_table($table);
@@ -163,14 +243,14 @@ function xmldb_imagemap_upgrade($oldversion) {
             $areas = $DB->get_records('imagemap_area', null, '', 'id, linktype, linktarget');
             foreach ($areas as $area) {
                 if ($area->linktype === 'module' || $area->linktype === 'section') {
-                    $DB->set_field('imagemap_area', 'targettype', $area->linktype, array('id' => $area->id));
-                    $DB->set_field('imagemap_area', 'targetid', (int)$area->linktarget, array('id' => $area->id));
+                    $DB->set_field('imagemap_area', 'targettype', $area->linktype, ['id' => $area->id]);
+                    $DB->set_field('imagemap_area', 'targetid', (int)$area->linktarget, ['id' => $area->id]);
                 }
             }
         }
 
         // Drop old fields and index.
-        $index = new xmldb_index('conditioncmid', XMLDB_INDEX_NOTUNIQUE, array('conditioncmid'));
+        $index = new xmldb_index('conditioncmid', XMLDB_INDEX_NOTUNIQUE, ['conditioncmid']);
         if ($dbman->index_exists($table, $index)) {
             $dbman->drop_index($table, $index);
         }

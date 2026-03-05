@@ -34,7 +34,6 @@ require_once($CFG->dirroot . '/mod/imagemap/backup/moodle2/backup_imagemap_steps
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class backup_imagemap_activity_task extends backup_activity_task {
-
     /**
      * Define (add) particular settings this activity can have
      */

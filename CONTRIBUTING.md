@@ -16,19 +16,53 @@ Thank you for your interest in contributing! This document provides guidelines a
 
 This project follows **Moodle Coding Standards** and automatically enforces them through:
 
-- **PHP Lint** - Syntax validation
-- **Moodle Code Checker** - PSR-2 + Moodle-specific standards
-- **PHPDoc Checker** - Documentation compliance
-- **Mustache Lint** - Template syntax validation
-- **Upgrade Savepoints** - Database upgrade validation
+- **Moodle PHP Lint** - Syntax validation
+- **Moodle Code Checker** - Moodle coding standards
+- **Moodle PHPMD** - Code quality and best practices
+- **Moodle Validate** - Plugin structure and metadata
+- **Moodle Savepoints** - Upgrade savepoint checks
+- **Moodle Mustache** - Template syntax validation
 
-All code must pass these checks before merging.
+All code must pass these checks before committing.
+Checks run locally using a project-local `moodle-plugin-ci` (`.moodle-plugin-ci/`, version `^4`) to match CI tooling.
 
 ---
 
 ## Pre-Commit Setup
 
-### 1. Install Pre-Commit
+### 1. Install Composer Globally
+
+Ensure Composer is installed globally:
+
+```bash
+# macOS (using Homebrew)
+brew install composer
+
+# Ubuntu/Debian
+sudo apt-get install composer
+
+# Or install from https://getcomposer.org/download/
+curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Verify installation
+composer --version
+```
+
+### 2. Bootstrap Local Moodle Plugin CI
+
+From the plugin root directory:
+
+```bash
+composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci .moodle-plugin-ci "^4"
+```
+
+Verify local installation:
+
+```bash
+./.moodle-plugin-ci/bin/moodle-plugin-ci --version
+```
+
+### 3. Install Pre-Commit
 
 ```bash
 # Using pip (recommended)
@@ -41,7 +75,7 @@ brew install pre-commit
 apt-get install pre-commit
 ```
 
-### 2. Install Git Hooks
+### 4. Install Git Hooks
 
 From the plugin root directory:
 
@@ -51,19 +85,13 @@ pre-commit install
 
 This will set up Git hooks that run automatically on each commit.
 
-### 3. Make Hook Scripts Executable
-
-```bash
-chmod +x .githooks/*.sh
-```
-
-### 4. Verify Installation
+### 5. Verify Installation
 
 ```bash
 pre-commit run --all-files
 ```
 
-You should see output showing all hooks being checked.
+You should see all hooks being executed with the globally installed `moodle-plugin-ci` tool.
 
 ---
 
@@ -133,39 +161,41 @@ Before creating a pull request, ensure all local checks pass.
 
 ### Manual Testing
 
+Local checks using the same toolchain as CI:
+
 #### PHP Lint
 ```bash
-php -l path/to/file.php
+./.moodle-plugin-ci/bin/moodle-plugin-ci phplint .
 ```
 
-#### Moodle Code Checker (requires moodle-plugin-ci)
+#### Moodle Code Checker
 ```bash
-moodle-plugin-ci codechecker
+./.moodle-plugin-ci/bin/moodle-plugin-ci codechecker .
 ```
 
-#### PHPDoc Checker
+#### Moodle PHPMD (Code Quality)
 ```bash
-moodle-plugin-ci phpdoc
+./.moodle-plugin-ci/bin/moodle-plugin-ci phpmd .
 ```
 
-#### Validation
+#### Plugin Validation
 ```bash
-moodle-plugin-ci validate
+./.moodle-plugin-ci/bin/moodle-plugin-ci validate .
 ```
 
 #### Upgrade Savepoints
 ```bash
-moodle-plugin-ci savepoints
+./.moodle-plugin-ci/bin/moodle-plugin-ci savepoints .
 ```
 
-#### Mustache Templates
+#### Mustache Linter
 ```bash
-moodle-plugin-ci mustache
+./.moodle-plugin-ci/bin/moodle-plugin-ci mustache .
 ```
 
-### Setting Up Full moodle-plugin-ci
+### Full moodle-plugin-ci Suite
 
-See [Moodle Plugin CI Documentation](https://github.com/moodlehq/moodle-plugin-ci) for complete setup.
+For comprehensive test suite execution (including PHPUnit and Behat), see [Moodle Plugin CI Documentation](https://github.com/moodlehq/moodle-plugin-ci).
 
 ---
 
@@ -224,21 +254,33 @@ When reviewing code:
 
 **Solution**:
 ```bash
-# Reinstall pre-commit
-pre-commit clean
-pre-commit install
+# Ensure moodle-plugin-ci is installed globally
+composer global require moodlehq/moodle-plugin-ci
 
-# Make scripts executable
-chmod +x .githooks/*.sh
+# Verify it's in your PATH
+moodle-plugin-ci --version
+
+# If not found, add to ~/.bashrc or ~/.zshrc
+export PATH="$PATH:$HOME/.composer/vendor/bin"
 ```
 
-**Issue**: Mustache lint fails with false positives
+**Issue**: moodle-plugin-ci command not found
 
-**Solution**: The basic lint checks for balanced braces. Complex templates should be verified in Moodle.
+**Solution**: Composer's global bin directory is not in PATH:
+```bash
+# Add to ~/.bashrc, ~/.zshrc, or equivalent
+export PATH="$PATH:$HOME/.composer/vendor/bin"
+
+# Reload shell
+source ~/.bashrc  # or ~/.zshrc
+
+# Verify
+moodle-plugin-ci --version
+```
 
 **Issue**: Code Checker fails but passes locally
 
-**Solution**: Ensure you're using the same PHP version and Moodle standard:
+**Solution**: Ensure you have `moodle-plugin-ci` installed globally:
 ```bash
 php --version
 moodle-plugin-ci --version
@@ -246,9 +288,11 @@ moodle-plugin-ci --version
 
 ### Debugging Failed Checks
 
-1. **Run the specific hook**:
+1. **Run the specific hook manually**:
    ```bash
-   bash .githooks/moodle-codechecker.sh path/to/file.php
+   moodle-plugin-ci codechecker
+   moodle-plugin-ci phpmd
+   moodle-plugin-ci mustachelint
    ```
 
 2. **Check hook configuration**:
@@ -259,6 +303,13 @@ moodle-plugin-ci --version
 3. **View pre-commit logs**:
    ```bash
    pre-commit run --all-files --verbose
+   ```
+
+4. **Reinstall pre-commit hooks**:
+   ```bash
+   pre-commit uninstall
+   pre-commit install
+   pre-commit run --all-files
    ```
 
 ---

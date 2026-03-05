@@ -210,11 +210,17 @@ We welcome contributions! Whether you want to:
 
 See [**CONTRIBUTING.md**](CONTRIBUTING.md) for:
 - How to set up your development environment
-- Code standards and pre-commit hooks
+- Code standards and pre-commit hooks using `moodle-plugin-ci`
 - Testing requirements
 - Pull request process
 
-**Quick Start**: `bash setup-hooks.sh`
+**Quick Start**: 
+```bash
+composer install
+bash setup-hooks.sh
+```
+
+**Note**: As of March 2026, pre-commit hooks use the official `moodle-plugin-ci` tool. See [MIGRATION_HOOKS_v2.md](MIGRATION_HOOKS_v2.md) for details.
 
 ---
 
