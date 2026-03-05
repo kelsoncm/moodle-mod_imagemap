@@ -36,15 +36,15 @@ try {
     $coords = required_param('coords', PARAM_TEXT);
 
     $cm = get_coursemodule_from_id('imagemap', $cmid, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $imagemap = $DB->get_record('imagemap', array('id' => $cm->instance), '*', MUST_EXIST);
+    $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+    $imagemap = $DB->get_record('imagemap', ['id' => $cm->instance], '*', MUST_EXIST);
 
     require_login($course, true, $cm);
     $context = context_module::instance($cm->id);
     require_capability('mod/imagemap:manage', $context);
 
     // Verify area belongs to this imagemap.
-    $area = $DB->get_record('imagemap_area', array('id' => $areaid, 'imagemapid' => $imagemap->id), '*', MUST_EXIST);
+    $area = $DB->get_record('imagemap_area', ['id' => $areaid, 'imagemapid' => $imagemap->id], '*', MUST_EXIST);
 
     // Validate coords format (comma-separated numbers).
     $parts = explode(',', $coords);
@@ -54,9 +54,10 @@ try {
         }
     }
 
-    $DB->set_field('imagemap_area', 'coords', $coords, array('id' => $areaid));
+    $DB->set_field('imagemap_area', 'coords', $coords, ['id' => $areaid]);
 
-    echo json_encode(array('success' => true));
+    echo json_encode(['success' => true]);
 } catch (Exception $e) {
-    echo json_encode(array('success' => false, 'error' => $e->getMessage()));
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
+

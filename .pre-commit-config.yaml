@@ -1,0 +1,68 @@
+repos:
+  - repo: local
+    hooks:
+      - id: moodle-codechecker
+        name: Moodle Code Checker
+        description: 'Run Moodle CodeSniffer standard on modified PHP files'
+        entry: .githooks/moodle-codechecker.sh
+        language: script
+        types: [php]
+        pass_filenames: true
+
+      - id: moodle-phpdoc
+        name: Moodle PHPDoc Checker
+        description: 'Check PHPDoc compliance for modified PHP files'
+        entry: .githooks/moodle-phpdoc.sh
+        language: script
+        types: [php]
+        pass_filenames: true
+
+      - id: moodle-validate
+        name: Moodle Plugin Validation
+        description: 'Validate Moodle plugin structure and metadata'
+        entry: .githooks/moodle-validate.sh
+        language: script
+        always_run: true
+        pass_filenames: false
+
+      - id: moodle-savepoints
+        name: Check Upgrade Savepoints
+        description: 'Check that database upgrade scripts have proper savepoint declarations'
+        entry: .githooks/moodle-savepoints.sh
+        language: script
+        files: 'db/upgrade\.php$'
+        pass_filenames: false
+
+      - id: mustache-lint
+        name: Mustache Lint
+        description: 'Check Mustache template syntax'
+        entry: .githooks/mustache-lint.sh
+        language: script
+        files: '\.mustache$'
+
+      - id: php-lint
+        name: PHP Lint
+        description: 'Check PHP files for syntax errors'
+        entry: php -l
+        language: system
+        types: [php]
+        pass_filenames: true
+
+  # Standard checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 'v4.5.0'
+    hooks:
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        types: [php, markdown, yaml]
+
+      - id: end-of-file-fixer
+        name: Fix end of file
+        types: [php, markdown, yaml]
+
+      - id: check-yaml
+        name: Check YAML syntax
+        files: '\.(yaml|yml)$'
+
+      - id: check-merge-conflict
+        name: Check for merge conflicts

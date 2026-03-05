@@ -32,7 +32,7 @@ defined('MOODLE_INTERNAL') || die();
  * @return mixed true if the feature is supported, null if unknown
  */
 function imagemap_supports($feature) {
-    switch($feature) {
+    switch ($feature) {
         case FEATURE_MOD_INTRO:
             return true;
         case FEATURE_SHOW_DESCRIPTION:
@@ -102,22 +102,22 @@ function imagemap_update_instance(stdClass $imagemap, mod_imagemap_mod_form $mfo
 function imagemap_delete_instance($id) {
     global $DB;
 
-    if (!$imagemap = $DB->get_record('imagemap', array('id' => $id))) {
+    if (!$imagemap = $DB->get_record('imagemap', ['id' => $id])) {
         return false;
     }
 
-    // Delete all areas
-    $DB->delete_records('imagemap_area', array('imagemapid' => $imagemap->id));
+    // Delete all areas.
+    $DB->delete_records('imagemap_area', ['imagemapid' => $imagemap->id]);
 
-    // Delete all connection lines
+    // Delete all connection lines.
     $dbman = $DB->get_manager();
     $linetable = new xmldb_table('imagemap_line');
     if ($dbman->table_exists($linetable)) {
-        $DB->delete_records('imagemap_line', array('imagemapid' => $imagemap->id));
+        $DB->delete_records('imagemap_line', ['imagemapid' => $imagemap->id]);
     }
 
-    // Delete the instance
-    $DB->delete_records('imagemap', array('id' => $imagemap->id));
+    // Delete the instance.
+    $DB->delete_records('imagemap', ['id' => $imagemap->id]);
 
     return true;
 }
@@ -128,7 +128,7 @@ function imagemap_delete_instance($id) {
  * @return array
  */
 function imagemap_get_extra_capabilities() {
-    return array('moodle/site:accessallgroups');
+    return ['moodle/site:accessallgroups'];
 }
 
 /**
@@ -143,7 +143,7 @@ function imagemap_get_extra_capabilities() {
  * @param array $options additional options affecting the file serving
  * @return bool false if the file not found, just send the file otherwise and do not return anything
  */
-function imagemap_pluginfile($course, $cm, $context, $filearea, array $args, $forcedownload, array $options = array()) {
+function imagemap_pluginfile($course, $cm, $context, $filearea, array $args, $forcedownload, array $options = []) {
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
     }
@@ -175,7 +175,7 @@ function imagemap_pluginfile($course, $cm, $context, $filearea, array $args, $fo
  */
 function imagemap_get_areas($imagemapid) {
     global $DB;
-    return $DB->get_records('imagemap_area', array('imagemapid' => $imagemapid), 'sortorder ASC');
+    return $DB->get_records('imagemap_area', ['imagemapid' => $imagemapid], 'sortorder ASC');
 }
 
 /**
@@ -225,7 +225,7 @@ function imagemap_is_area_active($area, $userid) {
     if ($area->targettype === 'module') {
         $cm = get_coursemodule_from_id(null, (int)$area->targetid, 0, false, IGNORE_MISSING);
         if (!$cm) {
-            return false;
+            return false; // Module not found.
         }
         $modinfo = get_fast_modinfo($cm->course, $userid);
         $cminfo = $modinfo->get_cm($cm->id);
@@ -233,7 +233,7 @@ function imagemap_is_area_active($area, $userid) {
     }
 
     if ($area->targettype === 'section') {
-        $sectionrecord = $DB->get_record('course_sections', array('id' => (int)$area->targetid), 'id, course', IGNORE_MISSING);
+        $sectionrecord = $DB->get_record('course_sections', ['id' => (int)$area->targetid], 'id, course', IGNORE_MISSING);
         if (!$sectionrecord) {
             return false;
         }
@@ -288,7 +288,7 @@ function imagemap_get_area_url($area, $courseid) {
 function imagemap_get_area_target_data($area, $course, $context) {
     global $USER;
 
-    $data = array('url' => null, 'active' => false, 'tooltip' => '');
+    $data = ['url' => null, 'active' => false, 'tooltip' => ''];
 
     if ($area->targettype === 'module') {
         $cm = get_coursemodule_from_id(null, (int)$area->targetid, $course->id, false, IGNORE_MISSING);
@@ -297,12 +297,12 @@ function imagemap_get_area_target_data($area, $course, $context) {
         }
         $modinfo = get_fast_modinfo($course, (int)$USER->id);
         $cminfo = $modinfo->get_cm($cm->id);
-        $data['url'] = new moodle_url('/mod/' . $cm->modname . '/view.php', array('id' => $cm->id));
+        $data['url'] = new moodle_url('/mod/' . $cm->modname . '/view.php', ['id' => $cm->id]);
         $availabilityinfo = '';
         $data['active'] = imagemap_coursemodule_visible_for_user($cminfo, (int)$USER->id, $availabilityinfo);
         if (!$data['active']) {
             $info = $availabilityinfo !== '' ? $availabilityinfo : ($cminfo->availableinfo ?? '');
-            $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, array('context' => $context))));
+            $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, ['context' => $context])));
             $data['tooltip'] = $tooltip !== '' ? $tooltip : get_string('arearestricted', 'imagemap');
         }
         return $data;
@@ -314,12 +314,12 @@ function imagemap_get_area_target_data($area, $course, $context) {
         if (!$section) {
             return $data;
         }
-        $data['url'] = course_get_url($course, (object)$section, array('navigation' => true));
+        $data['url'] = course_get_url($course, (object)$section, ['navigation' => true]);
         $availabilityinfo = '';
         $data['active'] = imagemap_section_visible_for_user($section, (int)$USER->id, $availabilityinfo);
         if (!$data['active']) {
             $info = $availabilityinfo !== '' ? $availabilityinfo : ($section->availableinfo ?? '');
-            $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, array('context' => $context))));
+            $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, ['context' => $context])));
             $data['tooltip'] = $tooltip !== '' ? $tooltip : get_string('arearestricted', 'imagemap');
         }
         return $data;
@@ -386,7 +386,7 @@ function imagemap_cm_info_view(cm_info $cm) {
         return;
     }
 
-    $imagemap = $DB->get_record('imagemap', array('id' => $cm->instance), 'id, name, course', IGNORE_MISSING);
+    $imagemap = $DB->get_record('imagemap', ['id' => $cm->instance], 'id, name, course', IGNORE_MISSING);
     if (!$imagemap) {
         return;
     }
@@ -436,7 +436,7 @@ function imagemap_cm_info_view(cm_info $cm) {
             continue;
         }
 
-        $areadata[] = array(
+        $areadata[] = [
             'id' => (int)$area->id,
             'shape' => $shape,
             'coords' => $coords,
@@ -445,39 +445,39 @@ function imagemap_cm_info_view(cm_info $cm) {
             'active' => $isactive,
             'tooltip' => $targetdata['tooltip'],
             'activefilter' => $area->activefilter ?: 'none',
-            'inactivefilter' => $area->inactivefilter ?: 'filter: grayscale(100%);'
-        );
+            'inactivefilter' => $area->inactivefilter ?: 'filter: grayscale(100%);',
+        ];
     }
 
-    $summarydata = array(
+    $summarydata = [
         'id' => $summaryid,
         'imageurl' => $imageurl->out(false),
         'areas' => $areadata,
-    );
+    ];
     $encodedsummary = json_encode($summarydata);
 
-    $imageattrs = array(
+    $imageattrs = [
         'src' => $imageurl->out(false),
         'alt' => format_string($imagemap->name),
         'loading' => 'lazy',
         'class' => 'mod-imagemap-summary-image',
-        'style' => 'width:100%;height:auto;display:block;border-radius:4px;'
-    );
-    $content = html_writer::start_div('mod-imagemap-course-summary', array(
+        'style' => 'width:100%;height:auto;display:block;border-radius:4px;',
+    ];
+    $content = html_writer::start_div('mod-imagemap-course-summary', [
         'id' => $summaryid,
         'data-imagemap-summary' => $encodedsummary,
-        'style' => 'margin-top:.5rem;width:100%;position:relative;'
-    ));
+        'style' => 'margin-top:.5rem;width:100%;position:relative;',
+    ]);
     $content .= html_writer::empty_tag('img', $imageattrs);
-    $content .= html_writer::div('', 'mod-imagemap-summary-overlays', array(
-        'style' => 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;'
-    ));
+    $content .= html_writer::div('', 'mod-imagemap-summary-overlays', [
+        'style' => 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;',
+    ]);
 
     if ($restrictedcount > 0) {
         $content .= html_writer::div(
             get_string('coursepreviewrestricted', 'imagemap', $restrictedcount),
             'text-muted small',
-            array('style' => 'margin-top:.25rem;')
+            ['style' => 'margin-top:.25rem;']
         );
     }
 

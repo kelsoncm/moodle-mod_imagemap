@@ -198,6 +198,26 @@ Released under [GNU General Public License v3](LICENSE)
 
 ---
 
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Whether you want to:
+- 🐛 Report bugs
+- ✨ Suggest features
+- 🔧 Submit code improvements
+- 📖 Improve documentation
+
+See [**CONTRIBUTING.md**](CONTRIBUTING.md) for:
+- How to set up your development environment
+- Code standards and pre-commit hooks
+- Testing requirements
+- Pull request process
+
+**Quick Start**: `bash setup-hooks.sh`
+
+---
+
 ## 📄 Changelog
 
 ### 1.2.0 (2026-03-02)
