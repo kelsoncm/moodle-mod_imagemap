@@ -177,6 +177,20 @@ function imagemap_get_areas($imagemapid) {
 }
 
 /**
+ * Check if a user is a student (not a teacher/admin with editing capabilities).
+ *
+ * @param int $userid
+ * @param int $courseid
+ * @return bool
+ */
+function imagemap_is_student($userid, $courseid) {
+    $context = context_course::instance($courseid);
+    // Professors and admins who can edit have special capabilities
+    return !has_capability('mod/imagemap:edit', $context, $userid)
+        && !has_capability('moodle/course:viewhiddensections', $context, $userid);
+}
+
+/**
  * Check if a course module is visible for a specific user using availability API.
  *
  * @param cm_info|stdClass $cminfo
@@ -185,6 +199,12 @@ function imagemap_get_areas($imagemapid) {
  * @return bool
  */
 function imagemap_coursemodule_visible_for_user($cminfo, $userid, &$availabilityinfo = null) {
+    // Teachers and admins always see the module as available
+    $context = context_course::instance($cminfo->course);
+    if (!imagemap_is_student($userid, $cminfo->course)) {
+        return true;
+    }
+
     $ci = new \core_availability\info_module($cminfo);
     return $ci->is_user_visible($cminfo, $userid);
 }
@@ -198,6 +218,12 @@ function imagemap_coursemodule_visible_for_user($cminfo, $userid, &$availability
  * @return bool
  */
 function imagemap_section_visible_for_user($section, $userid, &$availabilityinfo = null) {
+    // Teachers and admins always see the section as available
+    $courseid = property_exists($section, 'course') ? $section->course : $section->courseid;
+    if (!imagemap_is_student($userid, $courseid)) {
+        return true;
+    }
+
     $availabilityinfo = '';
     $availablebyconditions = !empty($section->uservisible) && !empty($section->available);
 
@@ -243,7 +269,7 @@ function imagemap_is_area_active($area, $userid) {
         return imagemap_section_visible_for_user($sectioninfo, $userid);
     }
 
-    return false;
+    return true;
 }
 
 /**
