@@ -19,14 +19,11 @@ repos:
         stages: [pre-commit]
         require_serial: true
 
-      - id: moodle-validate
-        name: Moodle Validate
-        description: 'Validate plugin structure'
-        entry: .githooks/run-moodle-plugin-ci-v4.sh validate .
-        language: script
-        pass_filenames: false
-        stages: [pre-commit]
-        require_serial: true
+      # NOTE: moodle-validate and moodle-mustache require a complete Moodle installation
+      # with config.php, which is only available in Docker. These checks are run in CI/CD.
+      # To run these locally, execute inside the Docker container:
+      #   docker-compose exec moodle moodle-plugin-ci validate /path/to/plugin
+      #   docker-compose exec moodle moodle-plugin-ci mustache /path/to/plugin
 
       - id: moodle-savepoints
         name: Moodle Savepoints
@@ -36,14 +33,6 @@ repos:
         pass_filenames: false
         stages: [pre-commit]
         require_serial: true
-
-      - id: moodle-mustache
-        name: Mustache Lint
-        description: 'Check Mustache template syntax'
-        entry: .githooks/run-moodle-plugin-ci-v4.sh mustache .
-        language: script
-        pass_filenames: false
-        stages: [pre-commit]
 
       - id: php-lint
         name: Moodle PHP Lint
