@@ -437,15 +437,9 @@ function imagemap_sanitize_coords_for_html_map($coords) {
  * @return void
  */
 function imagemap_cm_info_view(cm_info $cm) {
-    global $DB, $PAGE;
-    static $summaryscriptadded = false;
+    global $DB, $PAGE, $OUTPUT;
 
     if (empty($cm->uservisible)) {
-        return;
-    }
-
-    $imagemap = $DB->get_record('imagemap', ['id' => $cm->instance], 'id, name, course', IGNORE_MISSING);
-    if (!$imagemap) {
         return;
     }
 
@@ -454,59 +448,72 @@ function imagemap_cm_info_view(cm_info $cm) {
         return;
     }
 
-    $fs = get_file_storage();
-    $files = $fs->get_area_files($context->id, 'mod_imagemap', 'image', 0, 'itemid, filepath, filename', false);
-    $imagefile = reset($files);
-    if (!$imagefile) {
+    $imagemap = $DB->get_record('imagemap', ['id' => $cm->instance], 'id, name, course', IGNORE_MISSING);
+    if (!$imagemap) {
         return;
     }
 
-    $imageurl = moodle_url::make_pluginfile_url(
-        $context->id,
-        'mod_imagemap',
-        'image',
-        $imagefile->get_itemid(),
-        $imagefile->get_filepath(),
-        $imagefile->get_filename()
-    );
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($context->id, 'mod_imagemap', 'image', 0, 'itemid, filepath, filename', false);
+    $imagefile = reset($files);
 
-    $course = get_course($imagemap->course);
+    if ($imagefile) {
+        $course = get_course($imagemap->course);
+
+        // Render content with JavaScript initialization
+        $content = imagemap_render_content_with_script($imagemap, $cm, $context, $course, $cm, $imagefile);
+
+        // Set as after link for course summary preview
+        $cm->set_after_link($content);
+    }
+}
+
+/**
+ * Prepare area data for display (used by view.php and imagemap_cm_info_view).
+ *
+ * @param stdClass $imagemap Imagemap record
+ * @param stdClass $course Course record
+ * @param context_module $context Module context
+ * @param cm_info|stdClass $cminfo Course module info
+ * @return array{imageurl: moodle_url|null, areadata: array, linesviewdata: array}
+ */
+function imagemap_prepare_display_data($imagemap, $course, $context, $cminfo) {
+    global $DB;
+
+    $imageurl = null;
+    $areadata = [];
+    $linesviewdata = [];
+
+    // Get the image file
+    $fs = get_file_storage();
+    $files = $fs->get_area_files($context->id, 'mod_imagemap', 'image', 0, 'itemid, filepath, filename', false);
+    $imagefile = reset($files);
+
+    if ($imagefile) {
+        $imageurl = moodle_url::make_pluginfile_url(
+            $context->id,
+            'mod_imagemap',
+            'image',
+            $imagefile->get_itemid(),
+            $imagefile->get_filepath(),
+            $imagefile->get_filename()
+        );
+    }
+
+    // Get areas
     $areas = imagemap_get_areas($imagemap->id);
 
-    $summaryid = 'imagemap-cm-summary-' . $cm->id;
-    $areadata = [];
-    $restrictedcount = 0;
-
     foreach ($areas as $area) {
-        $coords = imagemap_sanitize_coords_for_html_map($area->coords);
-        if ($coords === '') {
-            continue;
-        }
-
-        $targetdata = imagemap_get_area_target_data($area, $course, $context, $cm);
-        $isactive = (bool)$targetdata['active'];
-        if (!$isactive) {
-            $restrictedcount++;
-        }
-
-        $shape = imagemap_normalize_shape_for_html_map($area->shape);
-        if (!$shape) {
-            continue;
-        }
-
-        // Only add area if it has a valid URL
-        $url = !empty($targetdata['url']) ? $targetdata['url']->out(false) : '';
-        if (empty($url) && !empty($targetdata['tooltip'])) {
-            // Area is restricted, skip it for summary
-            continue;
-        }
+        $targetdata = imagemap_get_area_target_data($area, $course, $context, $cminfo);
+        $isactive = $targetdata['active'];
+        $url = $targetdata['url'];
 
         $areadata[] = [
             'id' => (int)$area->id,
-            'shape' => $shape,
-            'coords' => $coords,
+            'shape' => $area->shape,
+            'coords' => $area->coords,
             'title' => $area->title,
-            'url' => $url,
+            'url' => $url ? $url->out() : '',
             'active' => $isactive,
             'tooltip' => $targetdata['tooltip'],
             'activefilter' => $area->activefilter ?: 'none',
@@ -514,49 +521,93 @@ function imagemap_cm_info_view(cm_info $cm) {
         ];
     }
 
-    $summarydata = [
-        'id' => $summaryid,
-        'imageurl' => $imageurl->out(false),
-        'areas' => $areadata,
-    ];
-    $encodedsummary = json_encode($summarydata);
-
-    $imageattrs = [
-        'src' => $imageurl->out(false),
-        'alt' => format_string($imagemap->name),
-        'loading' => 'lazy',
-        'class' => 'mod-imagemap-summary-image',
-        'style' => 'width:100%;height:auto;display:block;border-radius:4px;',
-    ];
-    $content = html_writer::start_div('mod-imagemap-course-summary', [
-        'id' => $summaryid,
-        'data-imagemap-summary' => $encodedsummary,
-        'style' => 'margin-top:.5rem;width:100%;position:relative;',
-    ]);
-    $content .= html_writer::empty_tag('img', $imageattrs);
-    $content .= html_writer::div('', 'mod-imagemap-summary-overlays', [
-        'style' => 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;',
-    ]);
-
-    if ($restrictedcount > 0) {
-        $content .= html_writer::div(
-            get_string('coursepreviewrestricted', 'imagemap', $restrictedcount),
-            'text-muted small',
-            ['style' => 'margin-top:.25rem;']
-        );
+    // Load connection lines
+    $dbman = $DB->get_manager();
+    $linetable = new xmldb_table('imagemap_line');
+    if ($dbman->table_exists($linetable)) {
+        $lines = $DB->get_records('imagemap_line', ['imagemapid' => $imagemap->id]);
+        foreach ($lines as $line) {
+            $linesviewdata[] = [
+                'from_areaid' => (int)$line->from_areaid,
+                'to_areaid' => (int)$line->to_areaid,
+            ];
+        }
     }
 
-    $content .= html_writer::end_div();
+    return [
+        'imageurl' => $imageurl,
+        'areadata' => $areadata,
+        'linesviewdata' => $linesviewdata,
+    ];
+}
 
-    if (!$summaryscriptadded) {
-        $content .= html_writer::script(
-            "require(['mod_imagemap/summary'], function(summary) {" .
-            " if (summary && summary.init) { summary.init(); } });"
-        );
-        $summaryscriptadded = true;
+/**
+ * Prepare template data and JavaScript initialization for imagemap view.
+ *
+ * @param stdClass $imagemap Imagemap record
+ * @param stdClass $cm Course module object
+ * @param context_module $context Module context
+ * @param array $displaydata Display data from imagemap_prepare_display_data()
+ * @param stdClass|stored_file|null $imagefile Image file object
+ * @return array{templatedata: array, areadata: array, linesviewdata: array, imageurl: moodle_url|null}
+ */
+function imagemap_prepare_render_data($imagemap, $cm, $context, $displaydata, $imagefile) {
+    $imageurl = $displaydata['imageurl'];
+    $areadata = $displaydata['areadata'];
+    $linesviewdata = $displaydata['linesviewdata'];
+
+    // Prepare template data.
+    $templatedata = [
+        'has_image' => !empty($imagefile),
+        'imagemap_id' => $imagemap->id,
+        'has_manage' => has_capability('mod/imagemap:manage', $context),
+        'manage_url' => new moodle_url('/mod/imagemap/areas.php', ['id' => $cm->id]),
+        'manage_text' => get_string('managereas', 'imagemap'),
+        'no_image_text' => get_string('error:noimage', 'imagemap'),
+        'edit_settings_url' => new moodle_url('/course/modedit.php', ['update' => $cm->id, 'return' => 1]),
+        'edit_settings_text' => get_string('editsettings', 'moodle'),
+    ];
+
+    return [
+        'templatedata' => $templatedata,
+        'areadata' => $areadata,
+        'linesviewdata' => $linesviewdata,
+        'imageurl' => $imageurl,
+    ];
+}
+
+/**
+ * Render imagemap content with JavaScript initialization.
+ *
+ * @param stdClass $imagemap Imagemap record
+ * @param stdClass $cm Course module object
+ * @param context_module $context Module context
+ * @param stdClass $course Course record
+ * @param cm_info|stdClass $cminfo Course module info
+ * @param stdClass|stored_file|null $imagefile Image file object
+ * @return string HTML content rendered from template
+ */
+function imagemap_render_content_with_script($imagemap, $cm, $context, $course, $cminfo, $imagefile) {
+    global $OUTPUT, $PAGE;
+
+    // Prepare display data (areas, imageurl, lines)
+    $displaydata = imagemap_prepare_display_data($imagemap, $course, $context, $cminfo);
+
+    // Prepare render data (template and JavaScript parameters)
+    $renderdata = imagemap_prepare_render_data($imagemap, $cm, $context, $displaydata, $imagefile);
+
+    // Render template
+    $content = $OUTPUT->render_from_template('mod_imagemap/view', $renderdata['templatedata']);
+
+    // Initialize JavaScript
+    if (!empty($imagefile)) {
+        $PAGE->requires->js_call_amd('mod_imagemap/view', 'init', [
+            $imagemap->id,
+            $renderdata['areadata'],
+            $renderdata['imageurl']->out(),
+            $renderdata['linesviewdata']
+        ]);
     }
 
-    $cm->set_after_link($content);
-
-    $PAGE->requires->js_call_amd('mod_imagemap/summary', 'init');
+    return $content;
 }

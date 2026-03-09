@@ -61,78 +61,10 @@ $imagefile = reset($files);
 
 echo $OUTPUT->header();
 
-$areadata = [];
-
 if ($imagefile) {
-    error_log("DEBUG view.php: Has imagefile");
-    $imageurl = moodle_url::make_pluginfile_url(
-        $context->id,
-        'mod_imagemap',
-        'image',
-        $imagefile->get_itemid(),
-        $imagefile->get_filepath(),
-        $imagefile->get_filename()
-    );
-
-    // Get the image file..
-    $areas = imagemap_get_areas($imagemap->id);
-    
-    error_log("DEBUG view.php: imagemap_id={$imagemap->id}, areas_count=" . count($areas));
-
-    // Load connection lines.
-    $linesviewdata = [];
-    $dbman = $DB->get_manager();
-    $linetable = new xmldb_table('imagemap_line');
-    if ($dbman->table_exists($linetable)) {
-        $lines = $DB->get_records('imagemap_line', ['imagemapid' => $imagemap->id]);
-        foreach ($lines as $line) {
-            $linesviewdata[] = [
-                'from_areaid' => (int)$line->from_areaid,
-                'to_areaid' => (int)$line->to_areaid,
-            ];
-        }
-    }
-
-    // Prepare area data for JavaScript.
-    $areadata = [];
-    error_log("DEBUG view.php: Starting to process " . count($areas) . " areas");
-    foreach ($areas as $area) {
-        error_log("DEBUG view.php: Processing area id={$area->id}");
-        $targetdata = imagemap_get_area_target_data($area, $course, $context, $cm);
-        $isactive = $targetdata['active'];
-        $url = $targetdata['url'];
-
-        $areadata[] = [
-            'id' => (int)$area->id,
-            'shape' => $area->shape,
-            'coords' => $area->coords,
-            'title' => $area->title,
-            'url' => $url ? $url->out() : '',
-            'active' => $isactive,
-            'tooltip' => $targetdata['tooltip'],
-            'activefilter' => $area->activefilter ?: 'none',
-            'inactivefilter' => $area->inactivefilter ?: 'filter: grayscale(100%);',
-        ];
-    }
-
-    // Prepare template data.
-    $templatedata = [
-        'has_image' => !empty($imagefile),
-        'imagemap_id' => $imagemap->id,
-        'has_manage' => has_capability('mod/imagemap:manage', $context),
-        'manage_url' => new moodle_url('/mod/imagemap/areas.php', ['id' => $cm->id]),
-        'manage_text' => get_string('managereas', 'imagemap'),
-        'no_image_text' => get_string('error:noimage', 'imagemap'),
-        'edit_settings_url' => new moodle_url('/course/modedit.php', ['update' => $cm->id, 'return' => 1]),
-        'edit_settings_text' => get_string('editsettings', 'moodle'),
-    ];
-
-    echo $OUTPUT->render_from_template('mod_imagemap/view', $templatedata);
-
-    if (!empty($imagefile)) {
-        // Add JavaScript to render the canvas imagemap with CSS overlays.
-        $PAGE->requires->js_call_amd('mod_imagemap/view', 'init', [$imagemap->id, $areadata, $imageurl->out(), $linesviewdata]);
-    }
+    // Render content with JavaScript initialization
+    $content = imagemap_render_content_with_script($imagemap, $cm, $context, $course, $cm, $imagefile);
+    echo $content;
 }
 
 echo $OUTPUT->footer();
