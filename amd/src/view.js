@@ -124,9 +124,7 @@ define([], function () {
                     }
 
                     ctx.save();
-                    ctx.strokeStyle = area.active ? '#0073e6' : '#9e9e9e';
                     ctx.fillStyle = area.active ? 'rgba(0, 115, 230, 0.18)' : 'rgba(158, 158, 158, 0.18)';
-                    ctx.lineWidth = 2;
 
                     if (area.shape === 'rect' && coords.length >= 4) {
                         var x1 = Math.min(coords[0], coords[2]);
@@ -136,12 +134,10 @@ define([], function () {
                         ctx.beginPath();
                         ctx.rect(x1, y1, w, h);
                         ctx.fill();
-                        ctx.stroke();
                     } else if (area.shape === 'circle' && coords.length >= 3) {
                         ctx.beginPath();
                         ctx.arc(coords[0], coords[1], coords[2], 0, 2 * Math.PI);
                         ctx.fill();
-                        ctx.stroke();
                     } else if (area.shape === 'poly' && coords.length >= 6) {
                         ctx.beginPath();
                         ctx.moveTo(coords[0], coords[1]);
@@ -150,7 +146,6 @@ define([], function () {
                         }
                         ctx.closePath();
                         ctx.fill();
-                        ctx.stroke();
                     }
 
                     ctx.restore();
