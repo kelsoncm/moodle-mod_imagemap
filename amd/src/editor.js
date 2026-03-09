@@ -1,11 +1,8 @@
 define([], function () {
     var initializer = {
         init: function () {
-            console.log('Editor init called');
             var data = window.imagemapEditorData || {};
-            console.log('Editor data:', data);
             var canvas = document.getElementById('imagemap-canvas');
-            console.log('Canvas element:', canvas);
             if (!canvas) {
                 console.error('Canvas element not found');
                 return;
@@ -23,7 +20,6 @@ define([], function () {
             var selectedAreaId = null;
 
             img.onload = function () {
-                console.log('Image loaded, canvas dimensions:', img.width, 'x', img.height);
                 canvas.width = img.width;
                 canvas.height = img.height;
                 drawBase();
@@ -31,7 +27,6 @@ define([], function () {
             img.onerror = function () {
                 console.error('Failed to load image:', data.imageUrl);
             };
-            console.log('Setting image source to:', data.imageUrl);
             img.src = data.imageUrl || '';
 
             function drawBase() {

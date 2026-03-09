@@ -177,18 +177,17 @@ function imagemap_get_areas($imagemapid) {
 }
 
 /**
- * Check if a user is a student (not a teacher/admin with editing capabilities).
+ * Check if a user can manage/edit this activity (is teacher/admin with editing capabilities).
  *
  * @param int $userid
- * @param int $courseid
+ * @param stdClass $cm Course module object
  * @return bool
  */
-function imagemap_is_student($userid, $courseid) {
-    $context = context_course::instance($courseid);
-    // Professors and admins who can edit have special capabilities
-    return !has_capability('mod/imagemap:edit', $context, $userid)
-        && !has_capability('moodle/course:viewhiddensections', $context, $userid);
+function imagemap_can_manage_activity($userid, $cm) {
+    $context = context_module::instance($cm->id);
+    return has_capability('mod/imagemap:manage', $context, $userid);
 }
+
 
 /**
  * Check if a course module is visible for a specific user using availability API.
@@ -201,7 +200,7 @@ function imagemap_is_student($userid, $courseid) {
 function imagemap_coursemodule_visible_for_user($cminfo, $userid, &$availabilityinfo = null) {
     // Teachers and admins always see the module as available
     $context = context_course::instance($cminfo->course);
-    if (!imagemap_is_student($userid, $cminfo->course)) {
+    if (imagemap_can_manage_activity($userid, $cminfo)) {
         return true;
     }
 
@@ -219,9 +218,19 @@ function imagemap_coursemodule_visible_for_user($cminfo, $userid, &$availability
  */
 function imagemap_section_visible_for_user($section, $userid, &$availabilityinfo = null) {
     // Teachers and admins always see the section as available
-    $courseid = property_exists($section, 'course') ? $section->course : $section->courseid;
-    if (!imagemap_is_student($userid, $courseid)) {
-        return true;
+    $courseid = null;
+    if ($section instanceof section_info) {
+        $courseid = (int)$section->course;
+    } else if (is_object($section)) {
+        if (isset($section->course)) {
+            $courseid = (int)$section->course;
+        } else if (isset($section->courseid)) {
+            $courseid = (int)$section->courseid;
+        }
+    }
+
+    if (empty($courseid)) {
+        return false;
     }
 
     $availabilityinfo = '';
@@ -241,10 +250,16 @@ function imagemap_section_visible_for_user($section, $userid, &$availabilityinfo
  *
  * @param stdClass $area
  * @param int $userid
+ * @param cm_info|stdClass $cminfo Course module info object
  * @return bool
  */
-function imagemap_is_area_active($area, $userid) {
+function imagemap_is_area_active($area, $userid, $cminfo) {
     global $DB;
+
+    // If user can manage this activity, show all areas as active
+    if (imagemap_can_manage_activity($userid, $cminfo)) {
+        return true;
+    }
 
     if ($area->targettype === 'module') {
         $cm = get_coursemodule_from_id(null, (int)$area->targetid, 0, false, IGNORE_MISSING);
@@ -293,7 +308,15 @@ function imagemap_get_area_url($area, $courseid) {
         $modinfo = get_fast_modinfo($course);
         $section = $modinfo->get_section_info_by_id((int)$area->targetid, IGNORE_MISSING);
         if ($section) {
-            return course_get_url($course, (object)$section, ['navigation' => true]);
+            $url = course_get_url($course, $section, ['navigation' => true]);
+            // Fallback for section 0 or other cases where course_get_url returns null
+            if (!$url) {
+                $url = new moodle_url('/course/view.php', [
+                    'id' => $course->id,
+                    'section' => $section->section
+                ]);
+            }
+            return $url;
         }
         return null;
     }
@@ -307,12 +330,16 @@ function imagemap_get_area_url($area, $courseid) {
  * @param stdClass $area
  * @param stdClass $course
  * @param context_module $context
+ * @param cm_info $cminfo Course module info
  * @return array{url:moodle_url|null,active:bool,tooltip:string}
  */
-function imagemap_get_area_target_data($area, $course, $context) {
+function imagemap_get_area_target_data($area, $course, $context, $cminfo) {
     global $USER;
 
     $data = ['url' => null, 'active' => false, 'tooltip' => ''];
+
+    // Use the dedicated function to check if area is active
+    $data['active'] = imagemap_is_area_active($area, (int)$USER->id, $cminfo);
 
     if ($area->targettype === 'module') {
         $cm = get_coursemodule_from_id(null, (int)$area->targetid, $course->id, false, IGNORE_MISSING);
@@ -320,12 +347,10 @@ function imagemap_get_area_target_data($area, $course, $context) {
             return $data;
         }
         $modinfo = get_fast_modinfo($course, (int)$USER->id);
-        $cminfo = $modinfo->get_cm($cm->id);
+        $cminfo_target = $modinfo->get_cm($cm->id);
         $data['url'] = new moodle_url('/mod/' . $cm->modname . '/view.php', ['id' => $cm->id]);
-        $availabilityinfo = '';
-        $data['active'] = imagemap_coursemodule_visible_for_user($cminfo, (int)$USER->id, $availabilityinfo);
         if (!$data['active']) {
-            $info = $availabilityinfo !== '' ? $availabilityinfo : ($cminfo->availableinfo ?? '');
+            $info = $cminfo_target->availableinfo ?? '';
             $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, ['context' => $context])));
             $data['tooltip'] = $tooltip !== '' ? $tooltip : get_string('arearestricted', 'imagemap');
         }
@@ -338,11 +363,20 @@ function imagemap_get_area_target_data($area, $course, $context) {
         if (!$section) {
             return $data;
         }
-        $data['url'] = course_get_url($course, (object)$section, ['navigation' => true]);
-        $availabilityinfo = '';
-        $data['active'] = imagemap_section_visible_for_user($section, (int)$USER->id, $availabilityinfo);
+        
+        // Try to get URL using course_get_url first
+        $data['url'] = course_get_url($course, $section, ['navigation' => true]);
+        
+        // Fallback: If course_get_url returns null (e.g., for section 0), generate URL manually
+        if (!$data['url']) {
+            $data['url'] = new moodle_url('/course/view.php', [
+                'id' => $course->id,
+                'section' => $section->section
+            ]);
+        }
+        
         if (!$data['active']) {
-            $info = $availabilityinfo !== '' ? $availabilityinfo : ($section->availableinfo ?? '');
+            $info = $section->availableinfo ?? '';
             $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, ['context' => $context])));
             $data['tooltip'] = $tooltip !== '' ? $tooltip : get_string('arearestricted', 'imagemap');
         }
@@ -449,7 +483,7 @@ function imagemap_cm_info_view(cm_info $cm) {
             continue;
         }
 
-        $targetdata = imagemap_get_area_target_data($area, $course, $context);
+        $targetdata = imagemap_get_area_target_data($area, $course, $context, $cm);
         $isactive = (bool)$targetdata['active'];
         if (!$isactive) {
             $restrictedcount++;
@@ -460,12 +494,19 @@ function imagemap_cm_info_view(cm_info $cm) {
             continue;
         }
 
+        // Only add area if it has a valid URL
+        $url = !empty($targetdata['url']) ? $targetdata['url']->out(false) : '';
+        if (empty($url) && !empty($targetdata['tooltip'])) {
+            // Area is restricted, skip it for summary
+            continue;
+        }
+
         $areadata[] = [
             'id' => (int)$area->id,
             'shape' => $shape,
             'coords' => $coords,
             'title' => $area->title,
-            'url' => !empty($targetdata['url']) ? $targetdata['url']->out(false) : '',
+            'url' => $url,
             'active' => $isactive,
             'tooltip' => $targetdata['tooltip'],
             'activefilter' => $area->activefilter ?: 'none',

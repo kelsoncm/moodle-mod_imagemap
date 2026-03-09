@@ -36,6 +36,7 @@ $string['pluginadministration'] = 'Administração do Mapa de Imagem';
 // Form strings.
 $string['imagemapname'] = 'Nome';
 $string['imagemapimage'] = 'Imagem';
+$string['imagemapimage_help'] = 'Faça o upload de um arquivo de imagem (PNG, JPG, GIF, etc.) para usar como base para seu mapa de imagem interativo. Esta imagem será exibida na página da atividade com áreas clicáveis que você pode definir.';
 $string['managereas'] = 'Gerenciar áreas';
 $string['addarea'] = 'Adicionar área';
 $string['editarea'] = 'Editar área';
@@ -86,3 +87,38 @@ $string['error:invalidcoords'] = 'Coordenadas inválidas';
 
 // Privacy.
 $string['privacy:metadata'] = 'O módulo Mapa de Imagem não armazena nenhum dado pessoal.';
+
+// UI and buttons.
+$string['close'] = 'Fechar';
+$string['finish'] = 'Concluir';
+$string['clear'] = 'Limpar';
+$string['select'] = 'Selecionar';
+
+// CSS Examples.
+$string['cssexamples'] = 'Exemplos de CSS';
+$string['viewexamples'] = 'Ver Exemplos';
+$string['managecssexamples'] = 'Gerenciar Exemplos de CSS';
+$string['addexample'] = 'Adicionar Exemplo';
+$string['css_text'] = 'Código CSS';
+$string['type'] = 'Tipo';
+$string['sortorder'] = 'Ordem de Classificação';
+$string['exampledeleted'] = 'Exemplo excluído com sucesso';
+$string['examplesaved'] = 'Exemplo salvo com sucesso';
+$string['confirmdeleteexample'] = 'Tem certeza de que deseja excluir este exemplo?';
+
+// Toolbar / tools.
+$string['tool_hand'] = 'Selecionar';
+$string['tool_hand_help'] = 'Clique para selecionar, arraste para mover áreas. Clique com botão direito para editar.';
+$string['tool_line'] = 'Linha';
+$string['tool_line_help'] = 'Clique em uma forma de origem e depois em uma forma de destino para criar uma linha de conexão.';
+$string['tool_eraser'] = 'Borracha';
+$string['tool_eraser_help'] = 'Clique em uma forma ou linha para excluí-la.';
+$string['line_select_source'] = 'Clique na forma de origem';
+$string['line_select_dest'] = 'Agora clique na forma de destino';
+$string['line_same_area'] = 'Não é possível conectar uma forma a si mesma';
+$string['line_duplicate'] = 'Esta conexão já existe';
+$string['line_saved'] = 'Linha salva';
+$string['line_deleted'] = 'Linha excluída';
+$string['eraser_hint'] = 'Clique em uma forma ou linha para excluir';
+$string['confirm_delete_line'] = 'Excluir esta linha de conexão?';
+$string['connections'] = 'Conexões';

@@ -13,17 +13,14 @@ define([], function () {
      * Initialize the admin interface
      */
     function init() {
-        console.log('Inicializando módulo admin...');
 
         // Wait for DOM to be ready
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function () {
-                console.log('DOM ready, inicializando canvases...');
                 processCanvases();
             });
         } else {
             // DOM is already ready
-            console.log('DOM já está pronto, inicializando canvases...');
             processCanvases();
         }
     }
@@ -32,23 +29,17 @@ define([], function () {
      * Process all canvas elements
      */
     function processCanvases() {
-        console.log('Iniciando processamento dos canvases...');
         var canvases = document.querySelectorAll('.css-preview-canvas');
-        console.log('Encontrados', canvases.length, 'canvases');
 
         /**
          * Process all canvas elements
          */
         function processCanvases() {
-            console.log('Iniciando processamento dos canvases...');
             var canvases = document.querySelectorAll('.css-preview-canvas');
-            console.log('Encontrados', canvases.length, 'canvases');
 
             canvases.forEach(function (canvas, index) {
-                console.log('Processando canvas', index);
                 var ctx = canvas.getContext('2d');
                 var css = canvas.getAttribute('data-css');
-                console.log('CSS para canvas', index, ':', css);
 
                 // Limpar canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -91,16 +82,12 @@ define([], function () {
                         // Tentar aplicar o filtro diretamente ao contexto 2D
                         try {
                             ctx.filter = filterValue;
-                            console.log('Canvas', index, '- Aplicando filtro ao contexto 2D:', filterValue);
                         } catch (e) {
-                            console.log('Canvas', index, '- Filtro não suportado no contexto 2D:', filterValue, '- Erro:', e.message);
-
                             // Fallback: aplicar filtros simples manualmente
                             if (filterValue.includes('opacity')) {
                                 var opacityMatch = filterValue.match(/opacity\((\d+(?:\.\d+)?)\)/);
                                 if (opacityMatch) {
                                     ctx.globalAlpha = parseFloat(opacityMatch[1]);
-                                    console.log('Canvas', index, '- Aplicando opacity fallback:', ctx.globalAlpha);
                                 }
                             }
                         }

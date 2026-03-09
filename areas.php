@@ -95,7 +95,7 @@ if ($imagefile) {
     $areasbyid = [];
     foreach ($areas as $area) {
         $areasbyid[$area->id] = $area;
-        $targetdata = imagemap_get_area_target_data($area, $course, $context);
+        $targetdata = imagemap_get_area_target_data($area, $course, $context, $cm);
         $areasdata[] = [
             'id' => (int)$area->id,
             'shape' => $area->shape,
@@ -184,7 +184,7 @@ if ($imagefile) {
         $activeexamplestemplate[] = [
             'id' => $example->id,
             'name' => $example->name,
-            'css' => $example->css,
+            'css' => $example->css_text,
         ];
     }
 
@@ -192,7 +192,7 @@ if ($imagefile) {
         $inactiveexamplestemplate[] = [
             'id' => $example->id,
             'name' => $example->name,
-            'css' => $example->css,
+            'css' => $example->css_text,
         ];
     }
 
@@ -354,8 +354,8 @@ if ($imagefile) {
         'shape_rect' => get_string('shape_rect', 'imagemap'),
         'shape_circle' => get_string('shape_circle', 'imagemap'),
         'shape_poly' => get_string('shape_poly', 'imagemap'),
-        'clear' => get_string('clear', 'moodle'),
-        'finish' => get_string('finish', 'moodle'),
+        'clear' => get_string('clear', 'imagemap'),
+        'finish' => get_string('finish', 'imagemap'),
         'addarea' => get_string('addarea', 'imagemap'),
         'title_label' => get_string('title', 'imagemap'),
         'target_label' => get_string('target', 'imagemap'),

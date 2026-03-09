@@ -36,6 +36,7 @@ $string['pluginadministration'] = 'Image Map administration';
 // Form strings.
 $string['imagemapname'] = 'Name';
 $string['imagemapimage'] = 'Image';
+$string['imagemapimage_help'] = 'Upload an image file (PNG, JPG, GIF, etc.) to use as the base for your interactive image map. This image will display on the activity page with clickable areas you can define.';
 $string['managereas'] = 'Manage areas';
 $string['addarea'] = 'Add area';
 $string['editarea'] = 'Edit area';
@@ -88,6 +89,12 @@ $string['exampledeleted'] = 'Example deleted successfully';
 $string['examplesaved'] = 'Example saved successfully';
 $string['noexamples'] = 'No examples defined yet';
 $string['confirmdeleteexample'] = 'Are you sure you want to delete this example?';
+
+// UI and buttons.
+$string['close'] = 'Close';
+$string['finish'] = 'Finish';
+$string['clear'] = 'Clear';
+$string['select'] = 'Select';
 
 // Toolbar / tools.
 $string['tool_hand'] = 'Select';

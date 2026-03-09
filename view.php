@@ -64,6 +64,7 @@ echo $OUTPUT->header();
 $areadata = [];
 
 if ($imagefile) {
+    error_log("DEBUG view.php: Has imagefile");
     $imageurl = moodle_url::make_pluginfile_url(
         $context->id,
         'mod_imagemap',
@@ -75,6 +76,8 @@ if ($imagefile) {
 
     // Get the image file..
     $areas = imagemap_get_areas($imagemap->id);
+    
+    error_log("DEBUG view.php: imagemap_id={$imagemap->id}, areas_count=" . count($areas));
 
     // Load connection lines.
     $linesviewdata = [];
@@ -92,8 +95,10 @@ if ($imagefile) {
 
     // Prepare area data for JavaScript.
     $areadata = [];
+    error_log("DEBUG view.php: Starting to process " . count($areas) . " areas");
     foreach ($areas as $area) {
-        $targetdata = imagemap_get_area_target_data($area, $course, $context);
+        error_log("DEBUG view.php: Processing area id={$area->id}");
+        $targetdata = imagemap_get_area_target_data($area, $course, $context, $cm);
         $isactive = $targetdata['active'];
         $url = $targetdata['url'];
 
