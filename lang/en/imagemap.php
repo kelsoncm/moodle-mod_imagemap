@@ -59,6 +59,10 @@ $string['activefilter'] = 'Active CSS';
 $string['activefilter_help'] = 'CSS to apply when the area is active.';
 $string['inactivefilter'] = 'Inactive CSS';
 $string['inactivefilter_help'] = 'CSS to apply when the area is inactive.';
+$string['acthoverfilter'] = 'Active CSS (hover)';
+$string['acthoverfilter_help'] = 'CSS to apply when the area is active and hovered.';
+$string['inahoverfilter'] = 'Inactive CSS (hover)';
+$string['inahoverfilter_help'] = 'CSS to apply when the area is inactive and hovered.';
 $string['arearestricted'] = 'This item has access restrictions.';
 
 // View strings.
@@ -82,6 +86,7 @@ $string['cssexamples'] = 'CSS Examples';
 $string['viewexamples'] = 'View Examples';
 $string['managecssexamples'] = 'Manage CSS Examples';
 $string['addexample'] = 'Add Example';
+$string['name'] = 'Name';
 $string['css_text'] = 'CSS Code';
 $string['type'] = 'Type';
 $string['sortorder'] = 'Sort Order';
@@ -89,6 +94,14 @@ $string['exampledeleted'] = 'Example deleted successfully';
 $string['examplesaved'] = 'Example saved successfully';
 $string['noexamples'] = 'No examples defined yet';
 $string['confirmdeleteexample'] = 'Are you sure you want to delete this example?';
+$string['exportexamples'] = 'Export Examples';
+$string['importexamples'] = 'Import Examples';
+$string['importfile'] = 'Import File';
+$string['importfile_help'] = 'Upload a JSON file with CSS examples to import';
+$string['examplesimported'] = '{$a} example(s) imported/updated successfully';
+$string['examplesimportedstats'] = 'Import complete. Inserted: {$a->inserted}, Updated: {$a->updated}, Skipped: {$a->skipped}.';
+$string['errorimportfile'] = 'Error reading import file';
+$string['errorinvalidjson'] = 'Invalid JSON format';
 
 // UI and buttons.
 $string['close'] = 'Close';

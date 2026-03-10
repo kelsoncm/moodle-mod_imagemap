@@ -1,0 +1,87 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+
+/**
+ * CSS examples listing page.
+ *
+ * @package    mod_imagemap
+ * @copyright  2026 Kelson C. M.
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+require_once(__DIR__ . '/lib.php');
+
+mod_imagemap_admin_require_access();
+mod_imagemap_admin_setup_page('/mod/imagemap/admin/index.php');
+
+$PAGE->requires->css('/mod/imagemap/styles/admin.css');
+$PAGE->requires->js('/mod/imagemap/css_preview.js');
+
+echo $OUTPUT->header();
+
+$templatedata = [
+    'heading' => $OUTPUT->heading(get_string('cssexamples', 'imagemap')),
+    'addbutton' => html_writer::link(
+        new moodle_url('/mod/imagemap/admin/edit.php'),
+        get_string('addexample', 'imagemap'),
+        ['class' => 'btn btn-primary mb-3']
+    ),
+    'exportbutton' => html_writer::link(
+        new moodle_url('/mod/imagemap/admin/export.php', ['sesskey' => sesskey()]),
+        get_string('exportexamples', 'imagemap'),
+        ['class' => 'btn btn-success mb-3 ms-2']
+    ),
+    'importbutton' => html_writer::link(
+        new moodle_url('/mod/imagemap/admin/import_form.php'),
+        get_string('importexamples', 'imagemap'),
+        ['class' => 'btn btn-info mb-3 ms-2']
+    ),
+    'types' => [],
+];
+
+$templatetypesdata = [];
+foreach (['active', 'inactive', 'acthover', 'inahover'] as $type) {
+    $examples = mod_imagemap_admin_get_examples($type);
+
+    $typedata = [];
+    $typedata["type"] = $type;
+    
+    // Generate CSS-friendly IDs from internal type names
+    // acthover -> active-hover, inahover -> inactive-hover
+    if ($type === 'acthover') {
+        $typedata["tabid"] = 'tab-active-hover';
+        $typedata["paneid"] = 'active-hover-pane';
+    } elseif ($type === 'inahover') {
+        $typedata["tabid"] = 'tab-inactive-hover';
+        $typedata["paneid"] = 'inactive-hover-pane';
+    } else {
+        $typedata["tabid"] = 'tab-' . $type;
+        $typedata["paneid"] = $type . '-pane';
+    }
+    
+    $typedata["label"] = get_string($type . 'filter', 'imagemap');
+    $typedata["has_examples"] = !empty($examples);
+    $typedata["active"] = ($type === 'active');
+    $typedata["examples"] = [];
+
+    if (!empty($examples)) {
+        foreach ($examples as $example) {
+            $typedata["examples"][] = [
+                'name' => s($example->name),
+                'sortorder' => $example->sortorder,
+                'css_text' => $example->css_text,
+                'editurl' => (string) new moodle_url('/mod/imagemap/admin/edit.php', ['id' => $example->id]),
+                'deleteurl' => (string) new moodle_url('/mod/imagemap/admin/delete.php', ['id' => $example->id, 'sesskey' => sesskey()]),
+            ];
+        }
+    }
+    $templatetypesdata[] = $typedata;
+}
+
+$templatedata['types'] = $templatetypesdata;
+
+// echo "<pre>";var_export($templatedata);echo "</pre>"; die();
+
+echo $OUTPUT->render_from_template('mod_imagemap/admin_css_examples', $templatedata);
+
+echo $OUTPUT->footer();

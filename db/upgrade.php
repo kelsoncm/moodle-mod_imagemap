@@ -273,5 +273,16 @@ function xmldb_imagemap_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026021101, 'imagemap');
     }
 
+    if ($oldversion < 2026030901) {
+        $table = new xmldb_table('imagemap_css_examples');
+        $field = new xmldb_field('type', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, null, 'id');
+
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_precision($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, 2026030901, 'imagemap');
+    }
+
     return true;
 }

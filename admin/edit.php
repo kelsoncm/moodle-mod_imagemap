@@ -1,0 +1,55 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+
+/**
+ * Add/Edit CSS example page.
+ *
+ * @package    mod_imagemap
+ */
+
+require_once(__DIR__ . '/lib.php');
+
+mod_imagemap_admin_require_access();
+mod_imagemap_admin_setup_page('/mod/imagemap/admin/edit.php');
+
+$id = optional_param('id', 0, PARAM_INT);
+$example = null;
+if ($id) {
+    $example = $DB->get_record('imagemap_css_examples', ['id' => $id], '*', MUST_EXIST);
+}
+
+$form = new \mod_imagemap\form\css_example_form(null, ['example' => $example]);
+
+if ($form->is_cancelled()) {
+    redirect(new moodle_url('/mod/imagemap/admin/index.php'));
+}
+
+if ($data = $form->get_data()) {
+    $dbtype = mod_imagemap_admin_normalize_type($data->type);
+    if ($dbtype === null) {
+        $dbtype = 'active';
+    }
+
+    $record = new stdClass();
+    $record->type = $dbtype;
+    $record->name = $data->name;
+    $record->css_text = $data->css_text;
+    $record->sortorder = $data->sortorder;
+
+    if ($example) {
+        $record->id = $example->id;
+        $record->timemodified = time();
+        $DB->update_record('imagemap_css_examples', $record);
+    } else {
+        $record->timecreated = time();
+        $record->timemodified = time();
+        $DB->insert_record('imagemap_css_examples', $record);
+    }
+
+    redirect(new moodle_url('/mod/imagemap/admin/index.php'), get_string('examplesaved', 'imagemap'));
+}
+
+echo $OUTPUT->header();
+echo $OUTPUT->heading($example ? get_string('editarea', 'imagemap') : get_string('addexample', 'imagemap'));
+$form->display();
+echo $OUTPUT->footer();

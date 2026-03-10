@@ -59,6 +59,10 @@ $string['activefilter'] = 'CSS ativo';
 $string['activefilter_help'] = 'CSS a ser aplicado quando a área estiver ativa.';
 $string['inactivefilter'] = 'CSS inativo';
 $string['inactivefilter_help'] = 'CSS a ser aplicado quando a área estiver inativa.';
+$string['acthoverfilter'] = 'CSS ativo (hover)';
+$string['acthoverfilter_help'] = 'CSS a ser aplicado quando a área estiver ativa e em hover.';
+$string['inahoverfilter'] = 'CSS inativo (hover)';
+$string['inahoverfilter_help'] = 'CSS a ser aplicado quando a área estiver inativa e em hover.';
 $string['arearestricted'] = 'Este item possui restrições de acesso.';
 
 // View strings.
@@ -66,17 +70,6 @@ $string['clickarea'] = 'Clique em uma área';
 $string['areainactive'] = 'Esta área está inativa (complete {$a} primeiro)';
 $string['noareas'] = 'Nenhuma área foi definida ainda.';
 $string['coursepreviewrestricted'] = '{$a} área(s) com restrição de acesso';
-
-// Admin strings.
-$string['cssexamples'] = 'Exemplos de CSS';
-$string['viewexamples'] = 'Ver Exemplos';
-$string['managecssexamples'] = 'Gerenciar exemplos de CSS';
-$string['noexamples'] = 'Nenhum exemplo foi criado ainda.';
-$string['confirmdeleteexample'] = 'Tem certeza de que deseja excluir este exemplo?';
-$string['order'] = 'Ordem';
-$string['preview'] = 'Pré-visualização';
-$string['edit'] = 'Editar';
-$string['delete'] = 'Excluir';
 
 // Error strings.
 $string['error:invalidshape'] = 'Tipo de forma inválido';
@@ -88,23 +81,37 @@ $string['error:invalidcoords'] = 'Coordenadas inválidas';
 // Privacy.
 $string['privacy:metadata'] = 'O módulo Mapa de Imagem não armazena nenhum dado pessoal.';
 
-// UI and buttons.
-$string['close'] = 'Fechar';
-$string['finish'] = 'Concluir';
-$string['clear'] = 'Limpar';
-$string['select'] = 'Selecionar';
-
 // CSS Examples.
 $string['cssexamples'] = 'Exemplos de CSS';
 $string['viewexamples'] = 'Ver Exemplos';
 $string['managecssexamples'] = 'Gerenciar Exemplos de CSS';
 $string['addexample'] = 'Adicionar Exemplo';
+$string['name'] = 'Nome';
 $string['css_text'] = 'Código CSS';
 $string['type'] = 'Tipo';
 $string['sortorder'] = 'Ordem de Classificação';
 $string['exampledeleted'] = 'Exemplo excluído com sucesso';
 $string['examplesaved'] = 'Exemplo salvo com sucesso';
+$string['noexamples'] = 'Nenhum exemplo definido ainda';
 $string['confirmdeleteexample'] = 'Tem certeza de que deseja excluir este exemplo?';
+$string['exportexamples'] = 'Exportar Exemplos';
+$string['importexamples'] = 'Importar Exemplos';
+$string['importfile'] = 'Arquivo para Importar';
+$string['importfile_help'] = 'Envie um arquivo JSON com exemplos de CSS para importar';
+$string['examplesimported'] = '{$a} exemplo(s) importado(s)/atualizado(s) com sucesso';
+$string['examplesimportedstats'] = 'Importacao concluida. Inseridos: {$a->inserted}, Atualizados: {$a->updated}, Ignorados: {$a->skipped}.';
+$string['errorimportfile'] = 'Erro ao ler o arquivo de importação';
+$string['errorinvalidjson'] = 'Formato JSON inválido';
+$string['order'] = 'Ordem';
+$string['preview'] = 'Pré-visualização';
+
+// UI and buttons.
+$string['close'] = 'Fechar';
+$string['finish'] = 'Concluir';
+$string['clear'] = 'Limpar';
+$string['select'] = 'Selecionar';
+$string['edit'] = 'Editar';
+$string['delete'] = 'Excluir';
 
 // Toolbar / tools.
 $string['tool_hand'] = 'Selecionar';

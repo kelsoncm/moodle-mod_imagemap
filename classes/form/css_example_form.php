@@ -39,9 +39,14 @@ class css_example_form extends \moodleform {
         $mform->addElement('hidden', 'id', $example->id ?? 0);
         $mform->setType('id', PARAM_INT);
 
+        $mform->addElement('hidden', 'action', !empty($example) ? 'edit' : 'add');
+        $mform->setType('action', PARAM_ALPHA);
+
         $types = [
             'active' => get_string('activefilter', 'imagemap'),
             'inactive' => get_string('inactivefilter', 'imagemap'),
+            'acthover' => get_string('activefilterhover', 'imagemap'),
+            'inahover' => get_string('inactivefilterhover', 'imagemap'),
         ];
         $mform->addElement('select', 'type', get_string('type', 'imagemap'), $types);
         $mform->setType('type', PARAM_ALPHA);

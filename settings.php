@@ -36,7 +36,7 @@ if ($ADMIN->fulltree) {
         'imagemap_cssexamples',
         get_string('cssexamples', 'imagemap'),
         html_writer::link(
-            new moodle_url('/mod/imagemap/admin.php'),
+            new moodle_url('/mod/imagemap/admin/'),
             get_string('managecssexamples', 'imagemap')
         )
     ));

@@ -37,7 +37,9 @@
 }
 
 .css-tabs-container input[type="radio"] {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .css-tabs {
@@ -65,7 +67,9 @@
 
 /* Estilo para aba ativa */
 .css-tabs-container input#tab-active:checked ~ .css-tabs label[for="tab-active"],
-.css-tabs-container input#tab-inactive:checked ~ .css-tabs label[for="tab-inactive"] {
+.css-tabs-container input#tab-inactive:checked ~ .css-tabs label[for="tab-inactive"],
+.css-tabs-container input#tab-active-hover:checked ~ .css-tabs label[for="tab-active-hover"],
+.css-tabs-container input#tab-inactive-hover:checked ~ .css-tabs label[for="tab-inactive-hover"] {
     background: #007bff;
     color: white;
     border-color: #007bff;
@@ -85,7 +89,9 @@
 
 /* Mostrar painel ativo */
 .css-tabs-container input#tab-active:checked ~ .css-tab-content #active-pane,
-.css-tabs-container input#tab-inactive:checked ~ .css-tab-content #inactive-pane {
+.css-tabs-container input#tab-inactive:checked ~ .css-tab-content #inactive-pane,
+.css-tabs-container input#tab-active-hover:checked ~ .css-tab-content #active-hover-pane,
+.css-tabs-container input#tab-inactive-hover:checked ~ .css-tab-content #inactive-hover-pane {
     display: block;
     opacity: 1;
 }
