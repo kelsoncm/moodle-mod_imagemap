@@ -2,7 +2,47 @@
 
 All notable changes to the Image Map module will be documented in this file.
 
-## [1.0.0-alpha] - 2026-01-30
+## [1.2.5] - 2026-03-09
+
+### Added
+- Full backup and restore support via Moodle Backup API (`backup/` and `restore/` directories)
+- New admin module (`admin/`) with CSS examples management: create, edit, delete, import/export
+- Hover type support in CSS examples editor
+- Automated CI/CD pipeline with GitHub Actions (`moodle-plugin-ci.yml`, `release.yml`)
+- Pre-commit hooks framework for code quality validation (`.githooks/`, `.pre-commit-config.yaml`)
+- Helper functions to check module and section visibility per user
+- Comprehensive database schema documentation (`docs/DATABASE.md`)
+- Architecture diagram documentation (`docs/DIAGRAM.md`)
+- Automated backup/restore test suite (`tests/backup_restore_test.php`)
+- Dependabot configuration for automated dependency updates
+
+### Changed
+- Teachers now always see areas as active (bypass completion filter for editing context)
+- Area destination refactored with improved filter UI
+- Rendering logic centralized to eliminate code duplication between `view.php` and templates
+- Documentation reorganized under `/docs` directory
+- Inactive filter standardized to `grayscale(100%)`
+- Improved i18n coverage for both `en` and `pt_br` language packs
+- Moodle code validation and Mustache linting moved to Docker-based workflow
+- `admin.php` refactored to delegate logic to `admin/lib.php`
+
+### Fixed
+- Area borders removed from map visualization
+- Version format corrected in `version.php` (removed underscores)
+- Increased npm timeout and added retry config for Moodle 5.0.1 compatibility in CI matrix
+
+## [Unreleased]
+
+### Planned Features
+- Area editing (modify existing areas)
+- Sortable areas (change z-index)
+- Preview mode for testing
+- More CSS filter presets
+- Accessibility improvements (keyboard navigation)
+- Analytics integration
+- Bulk area operations
+
+## [1.2.0] - 2026-02-23
 
 ### Added
 - Initial release of the Image Map module for Moodle
@@ -62,15 +102,3 @@ All notable changes to the Image Map module will be documented in this file.
 - Session key validation for form submissions
 - Proper context checks for file access
 - XSS risk assessment for capabilities
-
-## [Unreleased]
-
-### Planned Features
-- Area editing (modify existing areas)
-- Sortable areas (change z-index)
-- Preview mode for testing
-- Backup and restore support
-- More CSS filter presets
-- Accessibility improvements (keyboard navigation)
-- Analytics integration
-- Bulk area operations
