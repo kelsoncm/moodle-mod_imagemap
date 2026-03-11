@@ -54,7 +54,7 @@ $PAGE->set_title(format_string($imagemap->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 
-// Get the image file
+// Get the image file.
 $fs = get_file_storage();
 $files = $fs->get_area_files($context->id, 'mod_imagemap', 'image', 0, 'itemid, filepath, filename', false);
 $imagefile = reset($files);
@@ -62,7 +62,7 @@ $imagefile = reset($files);
 echo $OUTPUT->header();
 
 if ($imagefile) {
-    // Render content with JavaScript initialization
+    // Render content with JavaScript initialization.
     $content = imagemap_render_content_with_script($imagemap, $cm, $context, $course, $cm, $imagefile);
     echo $content;
 }

@@ -45,9 +45,9 @@ foreach (['active', 'inactive', 'acthover', 'inahover'] as $type) {
 
     $typedata = [];
     $typedata["type"] = $type;
-    
-    // Generate CSS-friendly IDs from internal type names
-    // acthover -> active-hover, inahover -> inactive-hover
+
+    // Generate CSS-friendly IDs from internal type names.
+    // acthover -> active-hover, inahover -> inactive-hover.
     if ($type === 'acthover') {
         $typedata["tabid"] = 'tab-active-hover';
         $typedata["paneid"] = 'active-hover-pane';
@@ -58,7 +58,7 @@ foreach (['active', 'inactive', 'acthover', 'inahover'] as $type) {
         $typedata["tabid"] = 'tab-' . $type;
         $typedata["paneid"] = $type . '-pane';
     }
-    
+
     $typedata["label"] = get_string($type . 'filter', 'imagemap');
     $typedata["has_examples"] = !empty($examples);
     $typedata["active"] = ($type === 'active');
@@ -80,7 +80,7 @@ foreach (['active', 'inactive', 'acthover', 'inahover'] as $type) {
 
 $templatedata['types'] = $templatetypesdata;
 
-// echo "<pre>";var_export($templatedata);echo "</pre>"; die();
+// Debug helper intentionally disabled.
 
 echo $OUTPUT->render_from_template('mod_imagemap/admin_css_examples', $templatedata);
 

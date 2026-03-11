@@ -129,7 +129,7 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
 
         $data = (object)$data;
 
-        // CSS examples are global, but we restore them to ensure availability
+        // CSS examples are global, but we restore them to ensure availability.
         // Check if this example already exists to avoid duplicates.
         $existing = $DB->get_record('imagemap_css_examples', [
             'type' => $data->type,

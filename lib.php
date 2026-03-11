@@ -198,7 +198,7 @@ function imagemap_can_manage_activity($userid, $cm) {
  * @return bool
  */
 function imagemap_coursemodule_visible_for_user($cminfo, $userid, &$availabilityinfo = null) {
-    // Teachers and admins always see the module as available
+    // Teachers and admins always see the module as available.
     $context = context_course::instance($cminfo->course);
     if (imagemap_can_manage_activity($userid, $cminfo)) {
         return true;
@@ -217,7 +217,7 @@ function imagemap_coursemodule_visible_for_user($cminfo, $userid, &$availability
  * @return bool
  */
 function imagemap_section_visible_for_user($section, $userid, &$availabilityinfo = null) {
-    // Teachers and admins always see the section as available
+    // Teachers and admins always see the section as available.
     $courseid = null;
     if ($section instanceof section_info) {
         $courseid = (int)$section->course;
@@ -256,7 +256,7 @@ function imagemap_section_visible_for_user($section, $userid, &$availabilityinfo
 function imagemap_is_area_active($area, $userid, $cminfo) {
     global $DB;
 
-    // If user can manage this activity, show all areas as active
+    // If user can manage this activity, show all areas as active.
     if (imagemap_can_manage_activity($userid, $cminfo)) {
         return true;
     }
@@ -309,11 +309,11 @@ function imagemap_get_area_url($area, $courseid) {
         $section = $modinfo->get_section_info_by_id((int)$area->targetid, IGNORE_MISSING);
         if ($section) {
             $url = course_get_url($course, $section, ['navigation' => true]);
-            // Fallback for section 0 or other cases where course_get_url returns null
+            // Fallback for section 0 or other cases where course_get_url returns null.
             if (!$url) {
                 $url = new moodle_url('/course/view.php', [
                     'id' => $course->id,
-                    'section' => $section->section
+                    'section' => $section->section,
                 ]);
             }
             return $url;
@@ -338,7 +338,7 @@ function imagemap_get_area_target_data($area, $course, $context, $cminfo) {
 
     $data = ['url' => null, 'active' => false, 'tooltip' => ''];
 
-    // Use the dedicated function to check if area is active
+    // Use the dedicated function to check if area is active.
     $data['active'] = imagemap_is_area_active($area, (int)$USER->id, $cminfo);
 
     if ($area->targettype === 'module') {
@@ -347,10 +347,10 @@ function imagemap_get_area_target_data($area, $course, $context, $cminfo) {
             return $data;
         }
         $modinfo = get_fast_modinfo($course, (int)$USER->id);
-        $cminfo_target = $modinfo->get_cm($cm->id);
+        $cminfotarget = $modinfo->get_cm($cm->id);
         $data['url'] = new moodle_url('/mod/' . $cm->modname . '/view.php', ['id' => $cm->id]);
         if (!$data['active']) {
-            $info = $cminfo_target->availableinfo ?? '';
+            $info = $cminfotarget->availableinfo ?? '';
             $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, ['context' => $context])));
             $data['tooltip'] = $tooltip !== '' ? $tooltip : get_string('arearestricted', 'imagemap');
         }
@@ -363,18 +363,18 @@ function imagemap_get_area_target_data($area, $course, $context, $cminfo) {
         if (!$section) {
             return $data;
         }
-        
-        // Try to get URL using course_get_url first
+
+        // Try to get URL using course_get_url first.
         $data['url'] = course_get_url($course, $section, ['navigation' => true]);
-        
-        // Fallback: If course_get_url returns null (e.g., for section 0), generate URL manually
+
+        // Fallback: If course_get_url returns null (e.g., for section 0), generate URL manually.
         if (!$data['url']) {
             $data['url'] = new moodle_url('/course/view.php', [
                 'id' => $course->id,
-                'section' => $section->section
+                'section' => $section->section,
             ]);
         }
-        
+
         if (!$data['active']) {
             $info = $section->availableinfo ?? '';
             $tooltip = trim(strip_tags(format_text($info, FORMAT_HTML, ['context' => $context])));
@@ -460,10 +460,10 @@ function imagemap_cm_info_view(cm_info $cm) {
     if ($imagefile) {
         $course = get_course($imagemap->course);
 
-        // Render content with JavaScript initialization
+        // Render content with JavaScript initialization.
         $content = imagemap_render_content_with_script($imagemap, $cm, $context, $course, $cm, $imagefile);
 
-        // Set as after link for course summary preview
+        // Set as after link for course summary preview.
         $cm->set_after_link($content);
     }
 }
@@ -484,7 +484,7 @@ function imagemap_prepare_display_data($imagemap, $course, $context, $cminfo) {
     $areadata = [];
     $linesviewdata = [];
 
-    // Get the image file
+    // Get the image file.
     $fs = get_file_storage();
     $files = $fs->get_area_files($context->id, 'mod_imagemap', 'image', 0, 'itemid, filepath, filename', false);
     $imagefile = reset($files);
@@ -500,7 +500,7 @@ function imagemap_prepare_display_data($imagemap, $course, $context, $cminfo) {
         );
     }
 
-    // Get areas
+    // Get areas.
     $areas = imagemap_get_areas($imagemap->id);
 
     foreach ($areas as $area) {
@@ -521,7 +521,7 @@ function imagemap_prepare_display_data($imagemap, $course, $context, $cminfo) {
         ];
     }
 
-    // Load connection lines
+    // Load connection lines.
     $dbman = $DB->get_manager();
     $linetable = new xmldb_table('imagemap_line');
     if ($dbman->table_exists($linetable)) {
@@ -590,22 +590,22 @@ function imagemap_prepare_render_data($imagemap, $cm, $context, $displaydata, $i
 function imagemap_render_content_with_script($imagemap, $cm, $context, $course, $cminfo, $imagefile) {
     global $OUTPUT, $PAGE;
 
-    // Prepare display data (areas, imageurl, lines)
+    // Prepare display data (areas, imageurl, lines).
     $displaydata = imagemap_prepare_display_data($imagemap, $course, $context, $cminfo);
 
-    // Prepare render data (template and JavaScript parameters)
+    // Prepare render data (template and JavaScript parameters).
     $renderdata = imagemap_prepare_render_data($imagemap, $cm, $context, $displaydata, $imagefile);
 
-    // Render template
+    // Render template.
     $content = $OUTPUT->render_from_template('mod_imagemap/view', $renderdata['templatedata']);
 
-    // Initialize JavaScript
+    // Initialize JavaScript.
     if (!empty($imagefile)) {
         $PAGE->requires->js_call_amd('mod_imagemap/view', 'init', [
             $imagemap->id,
             $renderdata['areadata'],
             $renderdata['imageurl']->out(),
-            $renderdata['linesviewdata']
+            $renderdata['linesviewdata'],
         ]);
     }
 
