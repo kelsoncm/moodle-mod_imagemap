@@ -5,6 +5,14 @@
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Admin helpers for CSS examples pages.
@@ -16,6 +24,8 @@
 
 require_once(__DIR__ . '/../../../config.php');
 require_once(__DIR__ . '/../lib.php');
+
+require_login();
 
 /**
  * Require admin access for CSS examples management.
@@ -116,23 +126,50 @@ function mod_imagemap_admin_default_examples(string $type): array {
     if ($type === 'acthover') {
         return [
             ['type' => 'acthover', 'name' => 'Sem Efeito', 'css_text' => 'none', 'sortorder' => 0],
-            ['type' => 'acthover', 'name' => 'Brilho Leve', 'css_text' => 'filter: brightness(1.15);', 'sortorder' => 1],
-            ['type' => 'acthover', 'name' => 'Realce Azul', 'css_text' => 'box-shadow: 0 0 0 3px rgba(0,115,230,0.4);', 'sortorder' => 2],
+            [
+                'type' => 'acthover', 'name' => 'Brilho Leve',
+                'css_text' => 'filter: brightness(1.15);', 'sortorder' => 1,
+            ],
+            [
+                'type' => 'acthover', 'name' => 'Realce Azul',
+                'css_text' => 'box-shadow: 0 0 0 3px rgba(0,115,230,0.4);', 'sortorder' => 2,
+            ],
             ['type' => 'acthover', 'name' => 'Zoom Suave', 'css_text' => 'transform: scale(1.03);', 'sortorder' => 3],
-            ['type' => 'acthover', 'name' => 'Contraste Leve', 'css_text' => 'filter: contrast(1.15);', 'sortorder' => 4],
-            ['type' => 'acthover', 'name' => 'Saturacao Leve', 'css_text' => 'filter: saturate(1.25);', 'sortorder' => 5],
-            ['type' => 'acthover', 'name' => 'Halo Verde', 'css_text' => 'box-shadow: 0 0 0 3px rgba(40,167,69,0.35);', 'sortorder' => 6],
+            [
+                'type' => 'acthover', 'name' => 'Contraste Leve',
+                'css_text' => 'filter: contrast(1.15);', 'sortorder' => 4,
+            ],
+            [
+                'type' => 'acthover', 'name' => 'Saturacao Leve',
+                'css_text' => 'filter: saturate(1.25);', 'sortorder' => 5,
+            ],
+            [
+                'type' => 'acthover', 'name' => 'Halo Verde',
+                'css_text' => 'box-shadow: 0 0 0 3px rgba(40,167,69,0.35);', 'sortorder' => 6,
+            ],
         ];
     }
 
     if ($type === 'inahover') {
         return [
             ['type' => 'inahover', 'name' => 'Sem Efeito', 'css_text' => 'none', 'sortorder' => 0],
-            ['type' => 'inahover', 'name' => 'Cinza + Escuro', 'css_text' => 'filter: grayscale(1) brightness(0.75);', 'sortorder' => 1],
-            ['type' => 'inahover', 'name' => 'Desfoque Leve', 'css_text' => 'filter: blur(1px) grayscale(0.7);', 'sortorder' => 2],
+            [
+                'type' => 'inahover', 'name' => 'Cinza + Escuro',
+                'css_text' => 'filter: grayscale(1) brightness(0.75);', 'sortorder' => 1,
+            ],
+            [
+                'type' => 'inahover', 'name' => 'Desfoque Leve',
+                'css_text' => 'filter: blur(1px) grayscale(0.7);', 'sortorder' => 2,
+            ],
             ['type' => 'inahover', 'name' => 'Opacidade Reduzida', 'css_text' => 'opacity: 0.75;', 'sortorder' => 3],
-            ['type' => 'inahover', 'name' => 'Baixo Contraste', 'css_text' => 'filter: contrast(0.75) brightness(0.8);', 'sortorder' => 4],
-            ['type' => 'inahover', 'name' => 'Dessaturado', 'css_text' => 'filter: saturate(0.35) brightness(0.85);', 'sortorder' => 5],
+            [
+                'type' => 'inahover', 'name' => 'Baixo Contraste',
+                'css_text' => 'filter: contrast(0.75) brightness(0.8);', 'sortorder' => 4,
+            ],
+            [
+                'type' => 'inahover', 'name' => 'Dessaturado',
+                'css_text' => 'filter: saturate(0.35) brightness(0.85);', 'sortorder' => 5,
+            ],
         ];
     }
 

@@ -38,11 +38,12 @@ require_once($CFG->libdir . '/phpunit/classes/restore_date_testcase.php');
 /**
  * Unit test class for backup/restore functionality
  *
+ * @coversNothing
  * @package    mod_imagemap
  * @copyright  2026 Kelson C. M.
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class backup_restore_test extends \restore_date_testcase {
+final class backup_restore_test extends \restore_date_testcase {
     /**
      * Test setup
      */
@@ -55,21 +56,21 @@ class backup_restore_test extends \restore_date_testcase {
     /**
      * Test backup class exists
      */
-    public function test_backup_class_exists() {
+    public function test_backup_class_exists(): void {
         $this->assertTrue(class_exists('backup_imagemap_activity_task'));
     }
 
     /**
      * Test restore class exists
      */
-    public function test_restore_class_exists() {
+    public function test_restore_class_exists(): void {
         $this->assertTrue(class_exists('restore_imagemap_activity_task'));
     }
 
     /**
      * Test imagemap instance can be backed up
      */
-    public function test_imagemap_backup() {
+    public function test_imagemap_backup(): void {
         global $DB;
 
         // Create test course.
@@ -103,7 +104,7 @@ class backup_restore_test extends \restore_date_testcase {
     /**
      * Test imagemap with areas can be restored
      */
-    public function test_imagemap_restore_with_areas() {
+    public function test_imagemap_restore_with_areas(): void {
         global $DB;
 
         // Create source course with imagemap.
@@ -181,7 +182,7 @@ class backup_restore_test extends \restore_date_testcase {
     /**
      * Test imagemap with module link mapping
      */
-    public function test_imagemap_restore_module_link_mapping() {
+    public function test_imagemap_restore_module_link_mapping(): void {
         global $DB;
 
         // Create source course with activities.
@@ -266,7 +267,7 @@ class backup_restore_test extends \restore_date_testcase {
     /**
      * Test imagemap lines are preserved
      */
-    public function test_imagemap_restore_with_lines() {
+    public function test_imagemap_restore_with_lines(): void {
         global $DB;
 
         // Create source course.
