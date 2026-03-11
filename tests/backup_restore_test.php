@@ -34,6 +34,8 @@ global $CFG;
 require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 require_once($CFG->libdir . '/phpunit/classes/restore_date_testcase.php');
+require_once($CFG->dirroot . '/mod/imagemap/backup/moodle2/backup_imagemap_activity_task.class.php');
+require_once($CFG->dirroot . '/mod/imagemap/restore/moodle2/restore_imagemap_activity_task.class.php');
 
 /**
  * Unit test class for backup/restore functionality
@@ -57,14 +59,14 @@ final class backup_restore_test extends \restore_date_testcase {
      * Test backup class exists
      */
     public function test_backup_class_exists(): void {
-        $this->assertTrue(class_exists('backup_imagemap_activity_task'));
+        $this->assertTrue(class_exists('backup_imagemap_activity_task', false));
     }
 
     /**
      * Test restore class exists
      */
     public function test_restore_class_exists(): void {
-        $this->assertTrue(class_exists('restore_imagemap_activity_task'));
+        $this->assertTrue(class_exists('restore_imagemap_activity_task', false));
     }
 
     /**
