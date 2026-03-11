@@ -22,6 +22,9 @@ Thumbs.db
 /node_modules
 /vendor
 *.log
+package.json
+package-lock.json
 # Pre-commit
 /.pre-commit-framework/
 .pre-commit-framework.egg-info
+
