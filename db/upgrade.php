@@ -276,9 +276,19 @@ function xmldb_imagemap_upgrade($oldversion) {
     if ($oldversion < 2026030901) {
         $table = new xmldb_table('imagemap_css_examples');
         $field = new xmldb_field('type', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, null, 'id');
+        $index = new xmldb_index('type', XMLDB_INDEX_NOTUNIQUE, ['type']);
 
-        if ($dbman->field_exists($table, $field)) {
+        if ($dbman->table_exists($table) && $dbman->field_exists($table, $field)) {
+            // Some databases require dropping dependent indexes before changing column precision.
+            if ($dbman->index_exists($table, $index)) {
+                $dbman->drop_index($table, $index);
+            }
+
             $dbman->change_field_precision($table, $field);
+
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
         }
 
         upgrade_mod_savepoint(true, 2026030901, 'imagemap');
