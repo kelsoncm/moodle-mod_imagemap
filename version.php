@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_imagemap';
-$plugin->release = '1.2.07';
-$plugin->version = 2026031107; // CSS example hover types.
+$plugin->release = '1.2.08';
+$plugin->version = 2026031108; // targetid field type changed to char to support URLs.
 $plugin->requires = 2023041000; // Moodle 4.1 or later.
 $plugin->maturity = MATURITY_ALPHA;

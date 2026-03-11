@@ -25,9 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-global $CFG;
-require_once($CFG->dirroot . '/course/tests/generator/lib.php');
-
 /**
  * Generator class for mod_imagemap.
  *

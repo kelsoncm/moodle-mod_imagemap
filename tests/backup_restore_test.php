@@ -57,6 +57,8 @@ final class backup_restore_test extends \restore_date_testcase {
         parent::setUp();
         // Reset after each test.
         $this->resetAfterTest(true);
+        // Admin user is always ID 2.
+        $this->userid = 2;
     }
 
     /**
