@@ -51,7 +51,7 @@ function imagemap_supports($feature) {
  * @param mod_imagemap_mod_form $mform The form instance
  * @return int The id of the newly inserted imagemap record
  */
-function imagemap_add_instance(stdClass $imagemap, mod_imagemap_mod_form $mform = null) {
+function imagemap_add_instance(stdClass $imagemap, ?mod_imagemap_mod_form $mform = null) {
     global $DB;
 
     $imagemap->timemodified = time();
@@ -74,7 +74,7 @@ function imagemap_add_instance(stdClass $imagemap, mod_imagemap_mod_form $mform 
  * @param mod_imagemap_mod_form $mform The form instance
  * @return boolean Success/Fail
  */
-function imagemap_update_instance(stdClass $imagemap, mod_imagemap_mod_form $mform = null) {
+function imagemap_update_instance(stdClass $imagemap, ?mod_imagemap_mod_form $mform = null) {
     global $DB;
 
     $imagemap->timemodified = time();
