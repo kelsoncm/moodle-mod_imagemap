@@ -80,15 +80,10 @@ class backup_imagemap_activity_structure_step extends backup_activity_structure_
         // CSS examples are global, but included in backup for portability.
         $cssexample->set_source_table('imagemap_css_examples', []);
 
-        // Define id annotations for areas.
-        // - module links need ID remapping during restore.
-        // - section links are handled via explicit section mapping on restore.
-        $area->annotate_ids('module', 'targetid');
-
         // Define file annotations.
         $imagemap->annotate_files('mod_imagemap', 'image', null);
 
-        // Return the root element (imagemap).
-        return $imagemap;
+        // Return the root element wrapped into the standard activity structure.
+        return $this->prepare_activity_structure($imagemap);
     }
 }

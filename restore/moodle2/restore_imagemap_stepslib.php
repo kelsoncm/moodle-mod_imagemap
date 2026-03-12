@@ -38,17 +38,17 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
         $paths = [];
 
         // Learn the imagemap element.
-        $imagemap = new restore_path_element('imagemap', '/imagemap');
+        $imagemap = new restore_path_element('imagemap', '/activity/imagemap');
         $paths[] = $imagemap;
 
         // Learn about areas.
-        $paths[] = new restore_path_element('imagemap_area', '/imagemap/areas/area');
+        $paths[] = new restore_path_element('imagemap_area', '/activity/imagemap/areas/area');
 
         // Learn about lines.
-        $paths[] = new restore_path_element('imagemap_line', '/imagemap/lines/line');
+        $paths[] = new restore_path_element('imagemap_line', '/activity/imagemap/lines/line');
 
         // Learn about CSS examples.
-        $paths[] = new restore_path_element('imagemap_css_example', '/imagemap/css_examples/css_example');
+        $paths[] = new restore_path_element('imagemap_css_example', '/activity/imagemap/css_examples/css_example');
 
         // Return the paths wrapped into standard activity structure.
         return $this->prepare_activity_structure($paths);
