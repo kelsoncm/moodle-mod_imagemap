@@ -177,6 +177,7 @@ final class backup_restore_test extends \restore_date_testcase {
             \backup::TARGET_CURRENT_DELETING
         );
 
+        $this->assertTrue($rc->execute_precheck());
         $this->assertTrue($rc->execute_plan());
 
         // Verify restored content.
@@ -269,6 +270,7 @@ final class backup_restore_test extends \restore_date_testcase {
             $this->userid,
             \backup::TARGET_CURRENT_DELETING
         );
+        $this->assertTrue($rc->execute_precheck());
         $rc->execute_plan();
 
         // Verify area exists and module link is remapped (not null).
@@ -377,6 +379,7 @@ final class backup_restore_test extends \restore_date_testcase {
             $this->userid,
             \backup::TARGET_CURRENT_DELETING
         );
+        $this->assertTrue($rc->execute_precheck());
         $rc->execute_plan();
 
         // Verify.
