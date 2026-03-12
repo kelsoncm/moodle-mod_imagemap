@@ -65,11 +65,9 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
         $data = (object)$data;
         $data->course = $this->get_courseid();
 
-        // Insert the imagemap record..
+        // Insert the imagemap record and register it as the restored activity instance.
         $newitemid = $DB->insert_record('imagemap', $data);
-
-        // Immediately after inserting "activity" record, call this.
-        $this->set_mapping('imagemap', $data->id, $newitemid);
+        $this->apply_activity_instance($newitemid);
     }
 
     /**
