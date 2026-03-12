@@ -393,9 +393,11 @@ define([], function () {
                 document.getElementById('form-shape').value = area.shape;
                 document.getElementById('form-coords').value = area.coords;
                 document.getElementById('title').value = area.title || '';
-                document.getElementById('linktype').value = area.linktype;
-                document.getElementById('linktarget').value = area.linktarget;
-                document.getElementById('conditioncmid').value = area.conditioncmid || 0;
+                var targetSelect = document.getElementById('target-select');
+                if (targetSelect && area.targettype && area.targetid) {
+                    targetSelect.value = area.targettype + ':' + area.targetid;
+                    setTargetFromSelect();
+                }
                 document.getElementById('activefilter').value = area.activefilter || 'none';
                 document.getElementById('inactivefilter').value = area.inactivefilter || 'filter: grayscale(100%);';
                 document.getElementById('area-form-title').textContent = (data.strings && data.strings.editarea) ? data.strings.editarea : 'Edit area';
@@ -407,6 +409,25 @@ define([], function () {
                     if (activeCanvas) CSSPreview.draw(activeCanvas, area.activefilter || 'none');
                     if (inactiveCanvas) CSSPreview.draw(inactiveCanvas, area.inactivefilter || 'filter: grayscale(100%);');
                 }
+            }
+
+            function setTargetFromSelect() {
+                var targetSelect = document.getElementById('target-select');
+                var targetTypeInput = document.getElementById('form-targettype');
+                var targetIdInput = document.getElementById('form-targetid');
+                if (!targetSelect || !targetTypeInput || !targetIdInput) {
+                    return;
+                }
+                var value = targetSelect.value || '';
+                var parts = value.split(':');
+                targetTypeInput.value = parts[0] || '';
+                targetIdInput.value = parts[1] || '';
+            }
+
+            var targetSelect = document.getElementById('target-select');
+            if (targetSelect) {
+                targetSelect.addEventListener('change', setTargetFromSelect);
+                setTargetFromSelect();
             }
 
             function findAreaAt(x, y) {

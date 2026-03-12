@@ -169,7 +169,6 @@ mod_imagemap
    │  ├─ Insere novo registro
    │  ├─ Se targettype='module': mapeia targetid (course_module)
    │  ├─ Se targettype='section': mapeia targetid (course_section)
-   │  ├─ Se targettype='url': mantém targetid literal (URL não muda)
    │  └─ Mapeia: id_antigo → id_novo
    │
    ├─ Processa imagemap_line (para cada linha)
@@ -218,7 +217,7 @@ mod_imagemap
 | `imagemapid` | ✅ | FK imagemap (muda) |
 | `shape` | ✅ | circle, rect, poly |
 | `coords` | ✅ | JSON com coordenadas |
-| `targettype` | ✅ | module, section, url |
+| `targettype` | ✅ | module, section |
 | `targetid` | ✅ | ID do alvo (remapeado conforme tipo) |
 | `title` | ✅ | Título da área |
 | `activefilter` | ✅ | CSS para ativo |

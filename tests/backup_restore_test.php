@@ -126,13 +126,18 @@ final class backup_restore_test extends \restore_date_testcase {
             'height' => 600,
         ]);
 
+        $sourcesection = $DB->get_record('course_sections', [
+            'course' => $sourcecourse->id,
+            'section' => 0,
+        ], 'id', MUST_EXIST);
+
         // Create an area.
         $area = (object)[
             'imagemapid' => $imagemap->id,
             'shape' => 'circle',
             'coords' => json_encode(['cx' => 100, 'cy' => 100, 'r' => 50]),
-            'targettype' => 'url',
-            'targetid' => 'https://example.com',
+            'targettype' => 'section',
+            'targetid' => $sourcesection->id,
             'title' => 'Test Area',
             'activefilter' => 'none',
             'inactivefilter' => 'grayscale(100%)',
@@ -184,7 +189,8 @@ final class backup_restore_test extends \restore_date_testcase {
         $restoredarea = reset($restoredareas);
         $this->assertEquals('circle', $restoredarea->shape);
         $this->assertEquals('Test Area', $restoredarea->title);
-        $this->assertEquals('https://example.com', $restoredarea->targetid);
+        $this->assertEquals('section', $restoredarea->targettype);
+        $this->assertNotEmpty($restoredarea->targetid);
     }
 
     /**
@@ -290,13 +296,20 @@ final class backup_restore_test extends \restore_date_testcase {
             'height' => 600,
         ]);
 
+        $forum1 = $this->getDataGenerator()->create_module('forum', [
+            'course' => $sourcecourse->id,
+        ]);
+        $forum2 = $this->getDataGenerator()->create_module('forum', [
+            'course' => $sourcecourse->id,
+        ]);
+
         // Create two areas.
         $area1 = (object)[
             'imagemapid' => $imagemap->id,
             'shape' => 'circle',
             'coords' => json_encode(['cx' => 100, 'cy' => 100, 'r' => 50]),
-            'targettype' => 'url',
-            'targetid' => 'https://example1.com',
+            'targettype' => 'module',
+            'targetid' => $forum1->cmid,
             'title' => 'Area 1',
             'activefilter' => 'none',
             'inactivefilter' => 'grayscale(100%)',
@@ -308,8 +321,8 @@ final class backup_restore_test extends \restore_date_testcase {
             'imagemapid' => $imagemap->id,
             'shape' => 'circle',
             'coords' => json_encode(['cx' => 300, 'cy' => 100, 'r' => 50]),
-            'targettype' => 'url',
-            'targetid' => 'https://example2.com',
+            'targettype' => 'module',
+            'targetid' => $forum2->cmid,
             'title' => 'Area 2',
             'activefilter' => 'none',
             'inactivefilter' => 'grayscale(100%)',

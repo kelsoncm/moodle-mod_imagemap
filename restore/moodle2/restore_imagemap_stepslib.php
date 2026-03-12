@@ -83,7 +83,7 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
         $data = (object)$data;
         $data->imagemapid = $this->get_new_parentid('imagemap');
 
-        // Handle different target types - only module links need ID remapping.
+        // Handle target types for internal links.
         if ($data->targettype == 'module') {
             // Module links need remapping to the new course context.
             $data->targetid = $this->get_mappingid('course_module', $data->targetid);
@@ -91,7 +91,6 @@ class restore_imagemap_activity_structure_step extends restore_activity_structur
             // Section links also need remapping to the new course context.
             $data->targetid = $this->get_mappingid('course_section', $data->targetid);
         }
-        // For 'url' type, targetid is a literal URL so no remapping needed.
 
         $newitemid = $DB->insert_record('imagemap_area', $data);
         $this->set_mapping('imagemap_area', $data->id, $newitemid);

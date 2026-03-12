@@ -82,7 +82,7 @@ class backup_imagemap_activity_structure_step extends backup_activity_structure_
 
         // Define id annotations for areas.
         // - module links need ID remapping during restore.
-        // - section and url links don't need remapping (url is literal, section stays same).
+        // - section links are handled via explicit section mapping on restore.
         $area->annotate_ids('module', 'targetid');
 
         // Define file annotations.

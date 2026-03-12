@@ -109,7 +109,7 @@ Each area supports:
 
 #### Table: mdl_imagemap_area
 - id, imagemapid, shape, coords
-- linktype, linktarget, title
+- targettype, targetid, title
 - conditioncmid (for completion)
 - activefilter, inactivefilter
 - sortorder

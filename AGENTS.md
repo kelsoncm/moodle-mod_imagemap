@@ -85,7 +85,7 @@ Stores individual clickable areas within an imagemap.
 - `coords` - Coordinates JSON (e.g., `{"x1": 10, "y1": 20, ...}`)
 - `title` - Area label/title
 - `link` - Link destination (module, section, or URL)
-- `linktype` - Type of link: 'module', 'section', 'url'
+- `linktype` - Legacy field migrated to `targettype` ('module' or 'section')
 - `timecreated` - Creation timestamp
 - `timemodified` - Last modification timestamp
 

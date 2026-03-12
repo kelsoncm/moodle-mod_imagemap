@@ -197,7 +197,7 @@ Representações visuais da arquitetura de Backup e Restore do mod_imagemap.
 │       ├─ Se módulo não está no curso destino: targetid=0     │
 │       └─ Preserva outras propriedades                        │
 │                                                                │
-│    c) Outros targettype (seção, URL): preservados             │
+│    c) Outros targettype (seção): preservados                 │
 │                                                                │
 │    d) Registra mapeamento                                     │
 │       └─ set_mapping('imagemap_area', antigo, novo)          │
