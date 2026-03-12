@@ -50,6 +50,9 @@ require_once($CFG->dirroot . '/mod/imagemap/restore/moodle2/restore_imagemap_act
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class backup_restore_test extends \restore_date_testcase {
+    /** @var int User ID used by backup/restore controllers. */
+    private int $userid;
+
     /**
      * Test setup
      */
@@ -104,7 +107,7 @@ final class backup_restore_test extends \restore_date_testcase {
         );
 
         // This should not throw an exception.
-        $this->assertTrue($bc->execute_plan());
+        $bc->execute_plan();
         $results = $bc->get_results();
         $this->assertNotEmpty($results['backup_destination']);
     }
@@ -113,7 +116,7 @@ final class backup_restore_test extends \restore_date_testcase {
      * Test imagemap with areas can be restored
      */
     public function test_imagemap_restore_with_areas(): void {
-        global $DB;
+        global $CFG, $DB;
 
         // Create source course with imagemap.
         $sourcecourse = $this->getDataGenerator()->create_course();
@@ -154,16 +157,19 @@ final class backup_restore_test extends \restore_date_testcase {
             backup::MODE_GENERAL,
             $this->userid
         );
+        $backupid = $bc->get_backupid();
         $bc->execute_plan();
         $results = $bc->get_results();
         $backupfile = $results['backup_destination'];
+        $fp = get_file_packer('application/vnd.moodle.backup');
+        $backupfile->extract_to_pathname($fp, $CFG->tempdir . '/backup/' . $backupid);
 
         // Create target course.
         $targetcourse = $this->getDataGenerator()->create_course();
 
         // Restore to target course.
         $rc = new \restore_controller(
-            $backupfile,
+            $backupid,
             $targetcourse->id,
             \backup::INTERACTIVE_NO,
             \backup::MODE_GENERAL,
@@ -197,7 +203,7 @@ final class backup_restore_test extends \restore_date_testcase {
      * Test imagemap with module link mapping
      */
     public function test_imagemap_restore_module_link_mapping(): void {
-        global $DB;
+        global $CFG, $DB;
 
         // Create source course with activities.
         $sourcecourse = $this->getDataGenerator()->create_course();
@@ -239,8 +245,12 @@ final class backup_restore_test extends \restore_date_testcase {
             backup::MODE_GENERAL,
             $this->userid
         );
+        $backupid = $bc->get_backupid();
         $bc->execute_plan();
         $results = $bc->get_results();
+        $backupfile = $results['backup_destination'];
+        $fp = get_file_packer('application/vnd.moodle.backup');
+        $backupfile->extract_to_pathname($fp, $CFG->tempdir . '/backup/' . $backupid);
 
         // Create target course.
         $targetcourse = $this->getDataGenerator()->create_course();
@@ -252,7 +262,7 @@ final class backup_restore_test extends \restore_date_testcase {
 
         // Restore.
         $rc = new \restore_controller(
-            $results['backup_destination'],
+            $backupid,
             $targetcourse->id,
             \backup::INTERACTIVE_NO,
             \backup::MODE_GENERAL,
@@ -282,7 +292,7 @@ final class backup_restore_test extends \restore_date_testcase {
      * Test imagemap lines are preserved
      */
     public function test_imagemap_restore_with_lines(): void {
-        global $DB;
+        global $CFG, $DB;
 
         // Create source course.
         $sourcecourse = $this->getDataGenerator()->create_course();
@@ -348,15 +358,19 @@ final class backup_restore_test extends \restore_date_testcase {
             backup::MODE_GENERAL,
             $this->userid
         );
+        $backupid = $bc->get_backupid();
         $bc->execute_plan();
         $results = $bc->get_results();
+        $backupfile = $results['backup_destination'];
+        $fp = get_file_packer('application/vnd.moodle.backup');
+        $backupfile->extract_to_pathname($fp, $CFG->tempdir . '/backup/' . $backupid);
 
         // Create target course.
         $targetcourse = $this->getDataGenerator()->create_course();
 
         // Restore.
         $rc = new \restore_controller(
-            $results['backup_destination'],
+            $backupid,
             $targetcourse->id,
             \backup::INTERACTIVE_NO,
             \backup::MODE_GENERAL,
