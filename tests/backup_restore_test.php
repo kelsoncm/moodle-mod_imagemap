@@ -96,20 +96,27 @@ final class backup_restore_test extends \restore_date_testcase {
             'height' => 600,
         ]);
 
-        // Create backup.
-        $bc = new \backup_controller(
-            backup::TYPE_1COURSE,
-            $course->id,
-            backup::FORMAT_MOODLE,
-            backup::INTERACTIVE_NO,
-            backup::MODE_GENERAL,
-            $this->userid
-        );
+        $bc = null;
+        try {
+            // Create backup.
+            $bc = new \backup_controller(
+                backup::TYPE_1COURSE,
+                $course->id,
+                backup::FORMAT_MOODLE,
+                backup::INTERACTIVE_NO,
+                backup::MODE_GENERAL,
+                $this->userid
+            );
 
-        // This should not throw an exception.
-        $bc->execute_plan();
-        $results = $bc->get_results();
-        $this->assertNotEmpty($results['backup_destination']);
+            // This should not throw an exception.
+            $bc->execute_plan();
+            $results = $bc->get_results();
+            $this->assertNotEmpty($results['backup_destination']);
+        } finally {
+            if ($bc) {
+                $bc->destroy();
+            }
+        }
     }
 
     /**
@@ -148,56 +155,69 @@ final class backup_restore_test extends \restore_date_testcase {
         ];
         $DB->insert_record('imagemap_area', $area);
 
-        // Backup the course.
-        $bc = new \backup_controller(
-            backup::TYPE_1COURSE,
-            $sourcecourse->id,
-            backup::FORMAT_MOODLE,
-            backup::INTERACTIVE_NO,
-            backup::MODE_GENERAL,
-            $this->userid
-        );
-        $backupid = $bc->get_backupid();
-        $bc->execute_plan();
-        $results = $bc->get_results();
-        $backupfile = $results['backup_destination'];
-        $fp = get_file_packer('application/vnd.moodle.backup');
-        $backupfile->extract_to_pathname($fp, $CFG->tempdir . '/backup/' . $backupid);
+        $bc = null;
+        $rc = null;
+        try {
+            // Backup the course.
+            $bc = new \backup_controller(
+                backup::TYPE_1COURSE,
+                $sourcecourse->id,
+                backup::FORMAT_MOODLE,
+                backup::INTERACTIVE_NO,
+                backup::MODE_GENERAL,
+                $this->userid
+            );
+            $backupid = $bc->get_backupid();
+            $bc->execute_plan();
+            $results = $bc->get_results();
+            $backupfile = $results['backup_destination'];
+            $fp = get_file_packer('application/vnd.moodle.backup');
+            $backupfile->extract_to_pathname($fp, $CFG->tempdir . '/backup/' . $backupid);
+            $bc->destroy();
+            $bc = null;
 
-        // Create target course.
-        $targetcourse = $this->getDataGenerator()->create_course();
+            // Create target course.
+            $targetcourse = $this->getDataGenerator()->create_course();
 
-        // Restore to target course.
-        $rc = new \restore_controller(
-            $backupid,
-            $targetcourse->id,
-            \backup::INTERACTIVE_NO,
-            \backup::MODE_GENERAL,
-            $this->userid,
-            \backup::TARGET_CURRENT_DELETING
-        );
+            // Restore to target course.
+            $rc = new \restore_controller(
+                $backupid,
+                $targetcourse->id,
+                \backup::INTERACTIVE_NO,
+                \backup::MODE_GENERAL,
+                $this->userid,
+                \backup::TARGET_CURRENT_DELETING
+            );
 
-        $this->assertTrue($rc->execute_precheck());
-        $this->assertTrue($rc->execute_plan());
+            $this->assertTrue($rc->execute_precheck());
+            $this->assertTrue($rc->execute_plan());
 
-        // Verify restored content.
-        $restoredimagemap = $DB->get_record('imagemap', [
-            'course' => $targetcourse->id,
-            'name' => 'Test Imagemap with Areas',
-        ]);
-        $this->assertNotNull($restoredimagemap);
+            // Verify restored content.
+            $restoredimagemap = $DB->get_record('imagemap', [
+                'course' => $targetcourse->id,
+                'name' => 'Test Imagemap with Areas',
+            ]);
+            $this->assertNotNull($restoredimagemap);
 
-        // Verify restored area.
-        $restoredareas = $DB->get_records('imagemap_area', [
-            'imagemapid' => $restoredimagemap->id,
-        ]);
-        $this->assertCount(1, $restoredareas);
+            // Verify restored area.
+            $restoredareas = $DB->get_records('imagemap_area', [
+                'imagemapid' => $restoredimagemap->id,
+            ]);
+            $this->assertCount(1, $restoredareas);
 
-        $restoredarea = reset($restoredareas);
-        $this->assertEquals('circle', $restoredarea->shape);
-        $this->assertEquals('Test Area', $restoredarea->title);
-        $this->assertEquals('section', $restoredarea->targettype);
-        $this->assertNotEmpty($restoredarea->targetid);
+            $restoredarea = reset($restoredareas);
+            $this->assertEquals('circle', $restoredarea->shape);
+            $this->assertEquals('Test Area', $restoredarea->title);
+            $this->assertEquals('section', $restoredarea->targettype);
+            $this->assertNotEmpty($restoredarea->targetid);
+        } finally {
+            if ($rc) {
+                $rc->destroy();
+            }
+            if ($bc) {
+                $bc->destroy();
+            }
+        }
     }
 
     /**
@@ -237,57 +257,70 @@ final class backup_restore_test extends \restore_date_testcase {
         ];
         $DB->insert_record('imagemap_area', $area);
 
-        // Backup.
-        $bc = new \backup_controller(
-            backup::TYPE_1COURSE,
-            $sourcecourse->id,
-            backup::FORMAT_MOODLE,
-            backup::INTERACTIVE_NO,
-            backup::MODE_GENERAL,
-            $this->userid
-        );
-        $backupid = $bc->get_backupid();
-        $bc->execute_plan();
-        $results = $bc->get_results();
-        $backupfile = $results['backup_destination'];
-        $fp = get_file_packer('application/vnd.moodle.backup');
-        $backupfile->extract_to_pathname($fp, $CFG->tempdir . '/backup/' . $backupid);
+        $bc = null;
+        $rc = null;
+        try {
+            // Backup.
+            $bc = new \backup_controller(
+                backup::TYPE_1COURSE,
+                $sourcecourse->id,
+                backup::FORMAT_MOODLE,
+                backup::INTERACTIVE_NO,
+                backup::MODE_GENERAL,
+                $this->userid
+            );
+            $backupid = $bc->get_backupid();
+            $bc->execute_plan();
+            $results = $bc->get_results();
+            $backupfile = $results['backup_destination'];
+            $fp = get_file_packer('application/vnd.moodle.backup');
+            $backupfile->extract_to_pathname($fp, $CFG->tempdir . '/backup/' . $backupid);
+            $bc->destroy();
+            $bc = null;
 
-        // Create target course.
-        $targetcourse = $this->getDataGenerator()->create_course();
+            // Create target course.
+            $targetcourse = $this->getDataGenerator()->create_course();
 
-        // Create matching module in target course.
-        $targetforum = $this->getDataGenerator()->create_module('forum', [
-            'course' => $targetcourse->id,
-        ]);
+            // Create matching module in target course.
+            $targetforum = $this->getDataGenerator()->create_module('forum', [
+                'course' => $targetcourse->id,
+            ]);
 
-        // Restore.
-        $rc = new \restore_controller(
-            $backupid,
-            $targetcourse->id,
-            \backup::INTERACTIVE_NO,
-            \backup::MODE_GENERAL,
-            $this->userid,
-            \backup::TARGET_CURRENT_DELETING
-        );
-        $this->assertTrue($rc->execute_precheck());
-        $rc->execute_plan();
+            // Restore.
+            $rc = new \restore_controller(
+                $backupid,
+                $targetcourse->id,
+                \backup::INTERACTIVE_NO,
+                \backup::MODE_GENERAL,
+                $this->userid,
+                \backup::TARGET_CURRENT_DELETING
+            );
+            $this->assertTrue($rc->execute_precheck());
+            $rc->execute_plan();
 
-        // Verify area exists and module link is remapped (not null).
-        $restoredimagemap = $DB->get_record('imagemap', [
-            'course' => $targetcourse->id,
-            'name' => 'Test Imagemap Module Links',
-        ]);
+            // Verify area exists and module link is remapped (not null).
+            $restoredimagemap = $DB->get_record('imagemap', [
+                'course' => $targetcourse->id,
+                'name' => 'Test Imagemap Module Links',
+            ]);
 
-        $restoredareas = $DB->get_records('imagemap_area', [
-            'imagemapid' => $restoredimagemap->id,
-        ]);
+            $restoredareas = $DB->get_records('imagemap_area', [
+                'imagemapid' => $restoredimagemap->id,
+            ]);
 
-        $this->assertCount(1, $restoredareas);
-        $restoredarea = reset($restoredareas);
-        // The module ID should be remapped (not the old $forum->cmid).
-        $this->assertNotNull($restoredarea->targetid);
-        $this->assertNotEquals($forum->cmid, $restoredarea->targetid);
+            $this->assertCount(1, $restoredareas);
+            $restoredarea = reset($restoredareas);
+            // The module ID should be remapped (not the old $forum->cmid).
+            $this->assertNotNull($restoredarea->targetid);
+            $this->assertNotEquals($forum->cmid, $restoredarea->targetid);
+        } finally {
+            if ($rc) {
+                $rc->destroy();
+            }
+            if ($bc) {
+                $bc->destroy();
+            }
+        }
     }
 
     /**
@@ -351,46 +384,59 @@ final class backup_restore_test extends \restore_date_testcase {
         ];
         $DB->insert_record('imagemap_line', $line);
 
-        // Backup.
-        $bc = new \backup_controller(
-            backup::TYPE_1COURSE,
-            $sourcecourse->id,
-            backup::FORMAT_MOODLE,
-            backup::INTERACTIVE_NO,
-            backup::MODE_GENERAL,
-            $this->userid
-        );
-        $backupid = $bc->get_backupid();
-        $bc->execute_plan();
-        $results = $bc->get_results();
-        $backupfile = $results['backup_destination'];
-        $fp = get_file_packer('application/vnd.moodle.backup');
-        $backupfile->extract_to_pathname($fp, $CFG->tempdir . '/backup/' . $backupid);
+        $bc = null;
+        $rc = null;
+        try {
+            // Backup.
+            $bc = new \backup_controller(
+                backup::TYPE_1COURSE,
+                $sourcecourse->id,
+                backup::FORMAT_MOODLE,
+                backup::INTERACTIVE_NO,
+                backup::MODE_GENERAL,
+                $this->userid
+            );
+            $backupid = $bc->get_backupid();
+            $bc->execute_plan();
+            $results = $bc->get_results();
+            $backupfile = $results['backup_destination'];
+            $fp = get_file_packer('application/vnd.moodle.backup');
+            $backupfile->extract_to_pathname($fp, $CFG->tempdir . '/backup/' . $backupid);
+            $bc->destroy();
+            $bc = null;
 
-        // Create target course.
-        $targetcourse = $this->getDataGenerator()->create_course();
+            // Create target course.
+            $targetcourse = $this->getDataGenerator()->create_course();
 
-        // Restore.
-        $rc = new \restore_controller(
-            $backupid,
-            $targetcourse->id,
-            \backup::INTERACTIVE_NO,
-            \backup::MODE_GENERAL,
-            $this->userid,
-            \backup::TARGET_CURRENT_DELETING
-        );
-        $this->assertTrue($rc->execute_precheck());
-        $rc->execute_plan();
+            // Restore.
+            $rc = new \restore_controller(
+                $backupid,
+                $targetcourse->id,
+                \backup::INTERACTIVE_NO,
+                \backup::MODE_GENERAL,
+                $this->userid,
+                \backup::TARGET_CURRENT_DELETING
+            );
+            $this->assertTrue($rc->execute_precheck());
+            $rc->execute_plan();
 
-        // Verify.
-        $restoredimagemap = $DB->get_record('imagemap', [
-            'course' => $targetcourse->id,
-        ]);
+            // Verify.
+            $restoredimagemap = $DB->get_record('imagemap', [
+                'course' => $targetcourse->id,
+            ]);
 
-        $restoredlines = $DB->get_records('imagemap_line', [
-            'imagemapid' => $restoredimagemap->id,
-        ]);
+            $restoredlines = $DB->get_records('imagemap_line', [
+                'imagemapid' => $restoredimagemap->id,
+            ]);
 
-        $this->assertCount(1, $restoredlines);
+            $this->assertCount(1, $restoredlines);
+        } finally {
+            if ($rc) {
+                $rc->destroy();
+            }
+            if ($bc) {
+                $bc->destroy();
+            }
+        }
     }
 }
